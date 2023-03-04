@@ -7,11 +7,11 @@ phases:
       - echo "Installing dependencies"
       - pip install --upgrade pip
       - pip install -r functions/input_validator/requirements.txt -t lib
-  # pre_build:
-  #   commands:
-  #     - echo "Running Tests"
-  #     - chmod +x scripts/run_tests.sh
-  #     - ./scripts/run_tests.sh
+  pre_build:
+    commands:
+      - echo "Running Tests"
+      - chmod +x scripts/run_tests.sh
+      - ./scripts/run_tests.sh
   build:
     commands:
       - echo "Zipping deployment package"
