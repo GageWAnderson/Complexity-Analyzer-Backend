@@ -6,3 +6,6 @@ phases:
     commands:
       - pip install --upgrade pip
       - pip install -r functions/input_validator/requirements.txt -t python
+artifacts:
+  files:
+    - '**/*'
