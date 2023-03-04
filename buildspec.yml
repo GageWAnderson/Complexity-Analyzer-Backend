@@ -1,0 +1,11 @@
+# Make a generic AWS buildspec.yml file that can be used for any AWS Lambda function.
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+    commands:
+      - pip install --upgrade pip
+      - pip install -r requirements.txt -t python
+      - pip install awscli --upgrade --user
+      - pip install aws-sam-cli --upgrade --user
