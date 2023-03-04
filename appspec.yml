@@ -1,12 +1,22 @@
 version: 0.0
 Resources:
-  - inputValidatorFunction:
+  - myLambdaFunction:
       Type: AWS::Lambda::Function
       Properties:
-        Name: "inputValidator"
-        Alias: "inputValidatorAlias"
-        CurrentVersion: "1"
-        TargetVersion: "2"
-Hooks:
-  - BeforeAllowTraffic: "LambdaFunctionToValidateBeforeTrafficShift"
-  - AfterAllowTraffic: "LambdaFunctionToValidateAfterTrafficShift"
+        Name: input_validator
+        Role: arn:aws:iam::513370974470:role/service-role/input_validator-role-x6l9z0q0
+        Handler: input_validator.lambda_handler
+        Runtime: python3.9
+        CodeUri: .
+        Timeout: 30
+        MemorySize: 256
+  - myLambdaAlias:
+      Type: AWS::Lambda::Alias
+      Properties:
+        Name: input_validator_alias
+        FunctionName: !Ref myLambdaFunction
+        FunctionVersion: 1
+        Description: input_va
+        RoutingConfig:
+          AdditionalVersionWeights:
+            2: 0.5
