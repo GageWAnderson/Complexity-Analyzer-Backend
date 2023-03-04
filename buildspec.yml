@@ -2,10 +2,27 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      python: 3.8
+      python: 3.9
     commands:
+      - echo "Installing dependencies"
       - pip install --upgrade pip
-      - pip install -r functions/input_validator/requirements.txt -t python
+      - pip install -r functions/input_validator/requirements.txt -t lib
+  pre_build:
+    commands:
+      - echo "Running Tests"
+      - ./scripts/run_tests.sh
+  build:
+    commands:
+      - echo "Zipping deployment package"
+      - cd lib
+      - zip -r ../deployment_package.zip .
+      - cd ..
+      - zip -g deployment_package.zip functions/input_validator/input_validator.py
+  post_build:
+    commands:
+      - echo "Updating Lambda function"
+      - aws lambda update-function-code --function-name input_validator --zip-file fileb://deployment_package.zip
+      - echo "Done"
 artifacts:
   files:
-    - '**/*'
+    - "**/*"
