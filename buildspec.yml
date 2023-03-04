@@ -10,8 +10,10 @@ phases:
   pre_build:
     commands:
       - echo "Running Tests"
-      - chmod +x scripts/run_tests.sh
-      - ./scripts/run_tests.sh
+      - cd scripts
+      - chmod +x run_tests.sh
+      - ./run_tests.sh
+      - cd ..
   build:
     commands:
       - echo "Zipping deployment package"
