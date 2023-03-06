@@ -20,7 +20,7 @@ phases:
       - cd lib
       - zip -r9 ../deployment_package.zip  .
       - cd ..
-      - zip -g deployment_package.zip functions/input_validator/input_validator.py
+      - zip -u deployment_package.zip functions/input_validator/input_validator.py
   post_build:
     commands:
       - echo "Updating Lambda function"
