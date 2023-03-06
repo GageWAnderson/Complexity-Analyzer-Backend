@@ -1,5 +1,6 @@
 version: 0.0
-Resources:
+os: linux
+resources:
   - myLambdaFunction:
       Type: AWS::Lambda::Function
       Properties:
