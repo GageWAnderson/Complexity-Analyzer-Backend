@@ -19,8 +19,9 @@ phases:
       - echo "Zipping deployment package"
       - cd lib
       - zip -r9 ../deployment_package.zip  .
-      - cd ..
-      - zip -ur deployment_package.zip functions/input_validator/input_validator.py
+      - cd ../functions/input_validator
+      - zip -u ../../deployment_package.zip input_validator.py
+      - cd ../..
   post_build:
     commands:
       - echo "Updating Lambda function"
