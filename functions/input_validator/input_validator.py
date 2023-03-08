@@ -13,7 +13,7 @@ client = boto3.client('lambda')
 def lambda_handler(event, context):
     headers = event['headers']
 
-    if 'Content-Type' not in headers or headers['Content-Type'] != 'application/json':
+    if 'Content-Type' not in headers or headers['Content-Type'] != 'application/json' or headers['Content-Type'] != 'application\/json;':
         return {
             'statusCode': codes.bad_request,
             'body': json.dumps({'message': 'Invalid Content-Type header'})
@@ -50,6 +50,7 @@ def lambda_handler(event, context):
     else:
         return construct_response(codes.bad_request, 'Input code failed security check, warning: this may be a malicious request')
 
+
 def validate_code_security(code):
     return True
     # response = client.invoke(
@@ -63,6 +64,7 @@ def validate_code_security(code):
     #     return response_body['message'] == 'Code security check passed'
     # else:
     #     return False
+
 
 def validate_argument(argJsonObject):
     if 'argName' not in argJsonObject:
