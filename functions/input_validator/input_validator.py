@@ -1,4 +1,5 @@
 import json
+import time
 from requests import codes
 import boto3
 import logging
@@ -12,6 +13,7 @@ lambdaClient = boto3.client('lambda')
 logsClient = boto3.client('logs')
 
 logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def lambda_handler(event, context):
@@ -85,19 +87,16 @@ def construct_response(status_code, message, error=None):
 
 def log_request_body(body, context):
     logger.info('Request body: ' + body)
-    log_group_name = '/aws/lambda/input_validator'
-    log_stream_name = 'input_validator',
+
+    # Write the log message to CloudWatch Logs
+    log_group_name = '/aws/lambda/{function_name}'.format(
+        function_name=context.function_name)
+    log_stream_name = context.aws_request_id
     logsClient.create_log_stream(
-        logGroupName=log_group_name,
-        logStreamName=log_stream_name
-    )
-    logsClient.put_log_events(
-        logGroupName=log_group_name,
-        logStreamName=log_stream_name,
-        logEvents=[
-            {
-                'timestamp': int(round(context.get_remaining_time_in_millis() * 1000)),
-                'message': body
-            }
-        ]
-    )
+        logGroupName=log_group_name, logStreamName=log_stream_name)
+    logsClient.put_log_events(logGroupName=log_group_name, logStreamName=log_stream_name, logEvents=[
+        {
+            'timestamp': int(round(time.time() * 1000)),
+            'message': 'Request body: ' + body
+        }
+    ])
