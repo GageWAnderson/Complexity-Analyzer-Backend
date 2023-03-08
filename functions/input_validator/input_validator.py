@@ -7,19 +7,14 @@ max_code_length = 500
 min_args_number = 1
 max_args_number = 3
 
-client = boto3.client('lambda')
+lambdaClient = boto3.client('lambda')
+logsClient = boto3.client('logs')
 
 
 def lambda_handler(event, context):
-    headers = event['headers']
-
-    if 'Content-Type' not in headers or headers['Content-Type'] != 'application/json' or headers['Content-Type'] != 'application\/json;':
-        return {
-            'statusCode': codes.bad_request,
-            'body': json.dumps({'message': 'Invalid Content-Type header'})
-        }
 
     body = event['body']
+    log_request_body(body)
 
     if not body:
         return construct_response(codes.bad_request, 'Empty request body')
@@ -82,3 +77,20 @@ def construct_response(status_code, message, error=None):
         'statusCode': status_code,
         'body': json.dumps({'message': message, 'error': error})
     }
+
+def log_request_body(body):
+    logsClient.put_log_events(
+        logGroupName='/aws/lambda/input_validator',
+        logStreamName=logsClient.describe_log_streams(
+            logGroupName='/aws/lambda/input_validator',
+            orderBy='LastEventTime',
+            descending=True,
+            limit=1
+        )['logStreams'][0]['logStreamName'],
+        logEvents=[
+            {
+                'timestamp': int(context.get_remaining_time_in_millis()),
+                'message': 'Request received: ' + body
+            }
+        ]
+    )
