@@ -86,7 +86,7 @@ def construct_response(status_code, message, error=None):
 def log_request_body(body, context):
     logger.info('Request body: ' + body)
     log_group_name = '/aws/lambda/input_validator'
-    log_stream_name = context.aws_request_id
+    log_stream_name = 'input_validator',
     logsClient.create_log_stream(
         logGroupName=log_group_name,
         logStreamName=log_stream_name
