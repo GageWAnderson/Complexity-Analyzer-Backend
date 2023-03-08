@@ -1,6 +1,7 @@
 import json
 from requests import codes
 import boto3
+import logging
 
 max_code_length = 500
 
@@ -10,14 +11,17 @@ max_args_number = 3
 lambdaClient = boto3.client('lambda')
 logsClient = boto3.client('logs')
 
+logger = logging.getLogger()
+
 
 def lambda_handler(event, context):
 
     body = event['body']
-    log_request_body(body, context.get_remaining_time_in_millis())
 
     if not body:
         return construct_response(codes.bad_request, 'Empty request body')
+
+    log_request_body(body, context)
 
     try:
         body_json = json.loads(body)
@@ -79,14 +83,21 @@ def construct_response(status_code, message, error=None):
     }
 
 
-def log_request_body(body, timestamp):
+def log_request_body(body, context):
+    logger.info('Request body: ' + body)
+    log_group_name = '/aws/lambda/input_validator'
+    log_stream_name = context.aws_request_id
+    logsClient.create_log_stream(
+        logGroupName=log_group_name,
+        logStreamName=log_stream_name
+    )
     logsClient.put_log_events(
-        logGroupName='/aws/lambda/input_validator',
-        logStreamName='input_validator',
+        logGroupName=log_group_name,
+        logStreamName=log_stream_name,
         logEvents=[
             {
-                'timestamp': int(timestamp),
-                'message': 'Request received: ' + body
+                'timestamp': int(round(context.get_remaining_time_in_millis() * 1000)),
+                'message': body
             }
         ]
     )
