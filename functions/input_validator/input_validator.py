@@ -14,7 +14,7 @@ logsClient = boto3.client('logs')
 def lambda_handler(event, context):
 
     body = event['body']
-    log_request_body(body)
+    log_request_body(body, context.get_remaining_time_in_millis())
 
     if not body:
         return construct_response(codes.bad_request, 'Empty request body')
@@ -78,18 +78,14 @@ def construct_response(status_code, message, error=None):
         'body': json.dumps({'message': message, 'error': error})
     }
 
-def log_request_body(body):
+
+def log_request_body(body, timestamp):
     logsClient.put_log_events(
         logGroupName='/aws/lambda/input_validator',
-        logStreamName=logsClient.describe_log_streams(
-            logGroupName='/aws/lambda/input_validator',
-            orderBy='LastEventTime',
-            descending=True,
-            limit=1
-        )['logStreams'][0]['logStreamName'],
+        logStreamName='input_validator',
         logEvents=[
             {
-                'timestamp': int(context.get_remaining_time_in_millis()),
+                'timestamp': int(timestamp),
                 'message': 'Request received: ' + body
             }
         ]
