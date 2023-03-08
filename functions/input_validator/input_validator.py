@@ -13,11 +13,14 @@ lambdaClient = boto3.client('lambda')
 logsClient = boto3.client('logs')
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+
+log_group_name = None
+log_stream_name = None
 
 
 def lambda_handler(event, context):
-
+    init_logger(context)
     body = event['body']
 
     if not body:
@@ -52,6 +55,15 @@ def lambda_handler(event, context):
         return construct_response(codes.bad_request, 'Input code failed security check, warning: this may be a malicious request')
 
 
+def init_logger(context):
+    log_group_name = '/aws/lambda/{function_name}'.format(
+        function_name=context.function_name)
+    log_stream_name = context.aws_request_id
+
+    logsClient.create_log_stream(
+        logGroupName=log_group_name, logStreamName=log_stream_name)
+
+
 def validate_code_security(code):
     return True
     # response = client.invoke(
@@ -79,21 +91,28 @@ def validate_argument(argJsonObject):
 
 
 def construct_response(status_code, message, error=None):
-    return {
+    response = {
         'statusCode': status_code,
         'body': json.dumps({'message': message, 'error': error})
     }
+    log_response(response)
+    return response
+
+
+def log_response(response):
+    logger.debug('Response: ' + json.dumps(response))
+
+    logsClient.put_log_events(logGroupName=log_group_name, logStreamName=log_stream_name, logEvents=[
+        {
+            'timestamp': int(round(time.time() * 1000)),
+            'message': 'Response: ' + json.dumps(response)
+        }
+    ])
 
 
 def log_request_body(body, context):
-    logger.info('Request body: ' + body)
+    logger.debug('Request body: ' + body)
 
-    # Write the log message to CloudWatch Logs
-    log_group_name = '/aws/lambda/{function_name}'.format(
-        function_name=context.function_name)
-    log_stream_name = context.aws_request_id
-    logsClient.create_log_stream(
-        logGroupName=log_group_name, logStreamName=log_stream_name)
     logsClient.put_log_events(logGroupName=log_group_name, logStreamName=log_stream_name, logEvents=[
         {
             'timestamp': int(round(time.time() * 1000)),
