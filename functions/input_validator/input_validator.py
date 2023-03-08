@@ -70,8 +70,14 @@ def validate_argument(argJsonObject):
 
 
 def construct_response(status_code, message, error=None):
-    response = {
-        'statusCode': status_code,
-        'body': json.dumps({'message': message, 'error': error})
-    }
+    if error:
+        response = {
+            'statusCode': status_code,
+            'body': json.dumps({'message': message, 'error': error})
+        }
+    else:
+        response = {
+            'statusCode': status_code,
+            'body': json.dumps({'message': message})
+        }
     return response
