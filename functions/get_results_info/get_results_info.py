@@ -4,6 +4,7 @@ import logging
 from requests import codes
 
 s3 = boto3.resource('s3')
+s3Client = boto3.client('s3')
 
 user_results_s3_bucket = 'complexity-analyzer-results-test'
 
@@ -20,8 +21,11 @@ def lambda_handler(event, context):
 
     try:
         results = query_user_results(user_id)
-        # TODO: Modify response to contain results with user results metadata
-        return construct_response(codes.ok, body=json.dumps(results))
+        if not results:
+            return construct_response(codes.not_found, f'No results found for user {user_id}')
+        else:
+            # TODO: Modify response to contain results with user results metadata
+            return construct_response(codes.ok, body=json.dumps(results))
     except Exception as e:
         return construct_response(codes.bad_request, error=f'Error querying user results: {str(e)}')
 
@@ -42,10 +46,4 @@ def construct_response(status_code, body=None, error=None):
 
 def query_user_results(user_id):
     bucket = s3.Bucket(user_results_s3_bucket)
-    objects = bucket.objects.filter(Prefix=user_id)
-
-    if len(objects) > 0 and objects[0].key == user_id:
-        # TODO: Modify the return statement to match the data structure of the user results
-        return f'User {user_id} successfully queried'
-    else:
-        return None
+    return bucket.objects.filter(Prefix=user_id)
