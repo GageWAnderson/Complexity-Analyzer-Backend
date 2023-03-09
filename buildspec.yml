@@ -7,7 +7,7 @@ phases:
       - echo "Installing dependencies"
       - pip install --upgrade pip
       - pip install -r functions/input_validator/requirements.txt -t input_validator_lib
-      - pip install -r funcitons/get_results_info/requirements.txt -t get_results_lib
+      - pip install -r functions/get_results_info/requirements.txt -t get_results_lib
   pre_build:
     commands:
       - echo "Running Tests"
