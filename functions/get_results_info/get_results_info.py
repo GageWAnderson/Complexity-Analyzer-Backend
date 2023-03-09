@@ -1,15 +1,20 @@
 import json
 import boto3
+import logging
 from requests import codes
 
 s3client = boto3.client('s3')
 
 user_results_s3_bucket = 'complexity-analyzer-results-test'
 
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 
 def lambda_handler(event, context):
 
     try:
+        logger.debug(event)
         user_id = event['user-id']
     except Exception as e:
         return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
