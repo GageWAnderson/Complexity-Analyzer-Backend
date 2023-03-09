@@ -13,7 +13,7 @@ user_results_s3_bucket = 'complexity-analyzer-results-test'
 def lambda_handler(event, context):
 
     try:
-        user_id = event['user-id']
+        user_id = event['headers']['user-id']
     except Exception as e:
         return construct_response(codes.bad_request, 'Invalid user ID header', str(e))
 
