@@ -13,9 +13,15 @@ max_number_of_variable_args = 1
 number_of_arg_fields = 3
 
 lambdaClient = boto3.client('lambda')
+dynamodb = boto3.client('dynamodb')
 
 
 def lambda_handler(event, context):
+
+    if 'user-id' not in event['headers']:
+        return construct_response(codes.bad_request, 'Missing user ID header')
+    elif not is_valid_user_id(event['headers']['user-id']):
+        return construct_response(codes.bad_request, 'Invalid user ID')
 
     try:
         body_json = event['body-json']
@@ -101,3 +107,24 @@ def construct_response(status_code, message, error=None):
             'body': json.dumps({'message': message})
         }
     return response
+
+def is_valid_user_id(user_id):
+    return True
+    
+    # # Define the parameters for the query
+    # params = {
+    #     'TableName': 'my-table-name',
+    #     'KeyConditionExpression': 'uuid = :uuid',
+    #     'ExpressionAttributeValues': {
+    #         ':uuid': {'S': uuid}
+    #     }
+    # }
+    
+    # # Query the DynamoDB table
+    # response = dynamodb.query(**params)
+    
+    # # Check if the UUID is present in the database
+    # if response['Count'] > 0:
+    #     return {'message': 'UUID found in database'}
+    # else:
+    #     return {'message': 'UUID not found in database'}
