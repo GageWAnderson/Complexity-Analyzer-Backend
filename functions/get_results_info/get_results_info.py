@@ -3,7 +3,7 @@ import boto3
 import logging
 from requests import codes
 
-s3client = boto3.client('s3')
+s3 = boto3.resource('s3')
 
 user_results_s3_bucket = 'complexity-analyzer-results-test'
 
@@ -41,13 +41,11 @@ def construct_response(status_code, body=None, error=None):
 
 
 def query_user_results(user_id):
-    # Define the parameters for the query
-    params = {
-        'Bucket': user_results_s3_bucket,
-        'Prefix': user_id
-    }
+    bucket = s3.Bucket(user_results_s3_bucket)
+    objects = bucket.objects.filter(Prefix=user_id)
 
-    # Query the S3 bucket
-    response = s3client.list_objects_v2(**params)
-
-    return response
+    if len(objects) > 0 and objects[0].key == user_id:
+        # TODO: Modify the return statement to match the data structure of the user results
+        return f'User {user_id} successfully queried'
+    else:
+        return None
