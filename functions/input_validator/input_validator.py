@@ -17,8 +17,11 @@ lambdaClient = boto3.client('lambda')
 
 def lambda_handler(event, context):
 
-    if 'user-id' not in event['headers']:
-        return construct_response(codes.bad_request, 'Missing user ID header')
+    try:
+        # TODO: Do we need this here since we can call in in the Code Complexity Analyzer Lambda Function?
+        user_id = event['params']['header']['user-id']
+    except Exception as e:
+        return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
 
     try:
         body_json = event['body-json']
@@ -94,15 +97,15 @@ def validate_argument(argJsonObject):
             return None, False
 
 
-def construct_response(status_code, message, error=None):
+def construct_response(status_code, body=None, error=None):
     if error:
         response = {
             'statusCode': status_code,
-            'body': json.dumps({'message': message, 'error': error})
+            'body': json.dumps({'error': error})
         }
     else:
         response = {
             'statusCode': status_code,
-            'body': json.dumps({'message': message})
+            'body': json.dumps({'message': body})
         }
     return response

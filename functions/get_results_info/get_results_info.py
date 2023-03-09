@@ -9,10 +9,10 @@ user_results_s3_bucket = 'complexity-analyzer-results-test'
 
 def lambda_handler(event, context):
 
-    if 'user-id' not in event['headers']:
-        return construct_response(codes.bad_request, error='Missing user ID header')
-
-    user_id = event['headers']['user-id']
+    try:
+        user_id = event['params']['header']['user-id']
+    except Exception as e:
+        return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
 
     try:
         results = query_user_results(user_id)
