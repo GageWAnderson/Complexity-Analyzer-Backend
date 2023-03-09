@@ -7,6 +7,11 @@ max_code_length = 500
 min_args_number = 1
 max_args_number = 3
 
+min_number_of_variable_args = 1
+max_number_of_variable_args = 1
+
+number_of_arg_fields = 3
+
 lambdaClient = boto3.client('lambda')
 
 
@@ -17,7 +22,6 @@ def lambda_handler(event, context):
     except Exception as e:
         return construct_response(codes.bad_request, 'Invalid JSON body', str(e))
 
-    # Your validation logic here
     if 'inputCode' not in body_json:
         return construct_response(codes.bad_request, 'Missing input code field')
     elif 'inputCode' in body_json and len(body_json['inputCode']) > max_code_length:
@@ -27,10 +31,9 @@ def lambda_handler(event, context):
     elif 'args' in body_json and len(body_json['args']) > max_args_number or len(body_json['args']) < min_args_number:
         return construct_response(codes.bad_request, 'Invalid argument number')
     else:
-        for arg in body_json['args']:
-            response = validate_argument(arg)
-            if response:
-                return response
+        response = validate_all_arguments(body_json)
+        if response:
+            return response
 
     if validate_code_security(body_json['inputCode']):
         # Call Code Complexity Analyzer Lambda Function
@@ -53,16 +56,37 @@ def validate_code_security(code):
     # else:
     #     return False
 
+def validate_all_arguments(json):
+    number_of_variable_args = 0
+    for arg in json['args']:
+        response, isVariable = validate_argument(arg)
+        if response:
+            return response
+        if isVariable:
+            number_of_variable_args += 1
+        if number_of_variable_args > max_number_of_variable_args:
+            return construct_response(codes.bad_request, 'Too many variable arguments')
+
+    if number_of_variable_args < min_number_of_variable_args:
+        return construct_response(codes.bad_request, 'Too few variable arguments')
+    else:
+        return None
+
 
 def validate_argument(argJsonObject):
     if 'argName' not in argJsonObject:
-        return construct_response(codes.bad_request, 'Missing argument name field')
+        return construct_response(codes.bad_request, 'Missing argument name field'), False
     elif 'argType' not in argJsonObject:
-        return construct_response(codes.bad_request, 'Missing argument type field')
+        return construct_response(codes.bad_request, 'Missing argument type field'), False
     elif 'variable' not in argJsonObject:
-        return construct_response(codes.bad_request, 'Missing variable field')
+        return construct_response(codes.bad_request, 'Missing variable field'), False
+    elif argJsonObject.length != number_of_arg_fields:
+        return construct_response(codes.bad_request, 'Invalid argument object'), False
     else:
-        return None
+        if argJsonObject['variable'] == 'true':
+            return None, True
+        else:
+            return None, False
 
 
 def construct_response(status_code, message, error=None):
