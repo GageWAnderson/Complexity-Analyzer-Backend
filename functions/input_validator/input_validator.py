@@ -11,13 +11,13 @@ lambdaClient = boto3.client('lambda')
 
 
 def lambda_handler(event, context):
-    body = event['body']
+    body = event['body-json']
 
     if not body:
         return construct_response(codes.bad_request, 'Empty request body')
 
     try:
-        body_json = json.loads(body)['body-json']
+        body_json = json.loads(body)
     except Exception as e:
         return construct_response(codes.bad_request, 'Invalid JSON body', str(e))
 
