@@ -1,6 +1,7 @@
 import json
 from requests import codes
 import boto3
+import logging
 
 max_code_length = 500
 
@@ -13,6 +14,10 @@ max_number_of_variable_args = 1
 number_of_arg_fields = 3
 
 lambdaClient = boto3.client('lambda')
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.ERROR)
 
 
 def lambda_handler(event, context):
