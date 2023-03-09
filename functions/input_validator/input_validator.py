@@ -80,7 +80,7 @@ def validate_argument(argJsonObject):
         return construct_response(codes.bad_request, 'Missing argument type field'), False
     elif 'variable' not in argJsonObject:
         return construct_response(codes.bad_request, 'Missing variable field'), False
-    elif argJsonObject.length != number_of_arg_fields:
+    elif len(argJsonObject) != number_of_arg_fields:
         return construct_response(codes.bad_request, 'Invalid argument object'), False
     else:
         if argJsonObject['variable'] == 'true':
