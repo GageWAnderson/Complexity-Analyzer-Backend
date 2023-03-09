@@ -83,7 +83,7 @@ def validate_argument(argJsonObject):
     elif len(argJsonObject) != number_of_arg_fields:
         return construct_response(codes.bad_request, 'Invalid argument object'), False
     else:
-        if argJsonObject['variable'] == 'true':
+        if argJsonObject['variable']:
             return None, True
         else:
             return None, False
