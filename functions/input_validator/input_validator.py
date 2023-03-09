@@ -109,22 +109,20 @@ def construct_response(status_code, message, error=None):
     return response
 
 def is_valid_user_id(user_id):
-    return True
+    # Define the parameters for the query
+    params = {
+        'TableName': 'complexity-analyzer-users',
+        'KeyConditionExpression': 'uuid = :uuid',
+        'ExpressionAttributeValues': {
+            ':uuid': {'S': uuid}
+        }
+    }
     
-    # # Define the parameters for the query
-    # params = {
-    #     'TableName': 'my-table-name',
-    #     'KeyConditionExpression': 'uuid = :uuid',
-    #     'ExpressionAttributeValues': {
-    #         ':uuid': {'S': uuid}
-    #     }
-    # }
+    # Query the DynamoDB table
+    response = dynamodb.query(**params)
     
-    # # Query the DynamoDB table
-    # response = dynamodb.query(**params)
-    
-    # # Check if the UUID is present in the database
-    # if response['Count'] > 0:
-    #     return {'message': 'UUID found in database'}
-    # else:
-    #     return {'message': 'UUID not found in database'}
+    # Check if the UUID is present in the database
+    if response['Count'] > 0:
+        return {'message': 'UUID found in database'}
+    else:
+        return {'message': 'UUID not found in database'}
