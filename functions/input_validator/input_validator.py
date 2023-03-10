@@ -50,7 +50,8 @@ def lambda_handler(event, context):
     if validate_code_security(body_json['inputCode']):
         try:
             logger.debug('Calling complexity analyzer...')
-            call_complexity_analyzer(body_json['inputCode'], body_json['args'], user_id)
+            call_complexity_analyzer(
+                body_json['inputCode'], body_json['args'], user_id)
             return construct_response(codes.ok, 'Input code passed security check')
         except Exception as e:
             return construct_response(codes.bad_request, 'Failed to call complexity analyzer', str(e))
@@ -64,13 +65,17 @@ def validate_code_security(code):
         InvocationType='RequestResponse',
         Payload=json.dumps({'inputCode': code})
     ).get('Payload').read().decode('utf-8')
+
     logger.debug(f'Code security validation response: {response}')
-    return response['statusCode'] == codes.ok
+
+    return json.loads(response)['statusCode'] == codes.ok
+
 
 def call_complexity_analyzer(code, args, user_id):
     lambdaClient.invoke_async(
         FunctionName='code_complexity_analyzer',
-        InvokeArgs=json.dumps({'inputCode': code, 'args': args, 'user-id': user_id})
+        InvokeArgs=json.dumps(
+            {'inputCode': code, 'args': args, 'user-id': user_id})
     )
 
 
