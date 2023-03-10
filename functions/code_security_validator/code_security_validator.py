@@ -27,6 +27,7 @@ restricted_locals = {}
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+
 def lambda_handler(event, context):
 
     try:
@@ -36,9 +37,10 @@ def lambda_handler(event, context):
         return construct_response(codes.bad_request, f'Failed to process input code: {str(e)}')
 
     try:
-        logger.debug(f'Compiling input code in restricted envionment: {input_code}')
+        logger.debug(
+            f'Compiling input code in restricted envionment: {input_code}')
         restricted_code = RestrictedPython.compile_restricted(
-            f'ast.parse({input_code}))')
+            f'ast.parse({input_code})')
         logger.debug(f'Input code compiled successfully: {restricted_code}')
     except Exception as e:
         return construct_response(codes.bad_request, f'Failed to compile input code in restricted envionment, warning this code might be malicious.: {str(e)}')
