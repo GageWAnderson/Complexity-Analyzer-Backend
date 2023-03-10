@@ -9,6 +9,8 @@ phases:
       - pip install -r functions/input_validator/requirements.txt -t input_validator_lib
       - pip install -r functions/get_results_info/requirements.txt -t get_results_lib
       - pip install -r functions/code_security_validator/requirements.txt -t code_security_validator_lib
+      - pip install -r functions/code_complexity_analyzer/requirements.txt -t code_complexity_analyzer_lib
+      - pip install -r functions/post_complexity_analyzer_results/requirements.txt -t post_complexity_analyzer_results_lib
   pre_build:
     commands:
       - echo "Running Tests"
@@ -34,6 +36,16 @@ phases:
       - cd ../functions/code_security_validator
       - zip -u ../../code_security_validator_deployment_package.zip code_security_validator.py
       - cd ../..
+      - cd code_complexity_analyzer_lib
+      - zip -r9 ../code_complexity_analyzer_deployment_package.zip  .
+      - cd ../functions/code_complexity_analyzer
+      - zip -u ../../code_complexity_analyzer_deployment_package.zip code_complexity_analyzer.py
+      - cd ../..
+      - cd post_complexity_analyzer_results_lib
+      - zip -r9 ../post_complexity_analyzer_results_deployment_package.zip  .
+      - cd ../functions/post_complexity_analyzer_results
+      - zip -u ../../post_complexity_analyzer_results_deployment_package.zip post_complexity_analyzer_results.py
+      - cd ../..
 
   post_build:
     commands:
@@ -41,6 +53,8 @@ phases:
       - aws lambda update-function-code --function-name input_validator --zip-file fileb://input_validator_deployment_package.zip
       - aws lambda update-function-code --function-name get_results_info --zip-file fileb://get_results_deployment_package.zip
       - aws lambda update-function-code --function-name code_security_validator --zip-file fileb://code_security_validator_deployment_package.zip
+      - aws lambda update-function-code --function-name code_complexity_analyzer --zip-file fileb://code_complexity_analyzer_deployment_package.zip
+      - aws lambda update-function-code --function-name post_complexity_analyzer_results --zip-file fileb://post_complexity_analyzer_results_deployment_package.zip
       - echo "Done"
 artifacts:
   files:
