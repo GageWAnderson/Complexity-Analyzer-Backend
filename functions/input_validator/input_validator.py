@@ -64,7 +64,7 @@ def validate_code_security(code):
         InvocationType='RequestResponse',
         Payload=json.dumps({'inputCode': code})
     )
-
+    logger.debug(f'Code security validation response: {response}')
     return response['statusCode'] == codes.ok
 
 def call_complexity_analyzer(code, args, user_id):
