@@ -49,3 +49,4 @@ def query_user_results(user_id):
     for obj in bucket.objects.filter(Prefix=user_id):
         result.append(obj.key)
     return result
+

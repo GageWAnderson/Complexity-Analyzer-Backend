@@ -5,7 +5,7 @@ import logging
 import time
 
 s3 = boto3.resource('s3')
-bucket_name = 'code-complexity-analyzer-results-test'
+bucket_name = 'complexity-analyzer-results-test'
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
