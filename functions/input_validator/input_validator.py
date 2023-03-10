@@ -47,26 +47,29 @@ def lambda_handler(event, context):
             return response
 
     if validate_code_security(body_json['inputCode']):
-        # Call Code Complexity Analyzer Lambda Function
-        return construct_response(codes.ok, 'Request validated successfully')
+        try:
+            call_complexity_analyzer(body_json['inputCode'], body_json['args'])
+            return construct_response(codes.ok, 'Input code passed security check')
+        except Exception as e:
+            return construct_response(codes.bad_request, 'Failed to call complexity analyzer', str(e))
     else:
         return construct_response(codes.bad_request, 'Input code failed security check, warning: this may be a malicious request')
 
 
 def validate_code_security(code):
-    return True
-    # TODO: Uncomment this when the Code Security Validator Lambda Function is ready
-    # response = client.invoke(
-    #     FunctionName='code_security_validator',
-    #     InvocationType='RequestResponse',
-    #     Payload=json.dumps({'inputCode': code})
-    # )
+    response = lambdaClient.invoke(
+        FunctionName='code_security_validator',
+        InvocationType='RequestResponse',
+        Payload=json.dumps({'inputCode': code})
+    )
 
-    # if response['StatusCode'] == codes.ok:
-    #     response_body = json.loads(response['Payload'].read())
-    #     return response_body['message'] == 'Code security check passed'
-    # else:
-    #     return False
+    return response['statusCode'] == codes.ok
+
+def call_complexity_analyzer(code, args):
+    lambdaClient.invoke_async(
+        FunctionName='code_complexity_analyzer',
+        InvokeArgs=json.dumps({'inputCode': code, 'args': args})
+    )
 
 
 def validate_all_arguments(json):
