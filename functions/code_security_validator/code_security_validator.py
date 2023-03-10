@@ -1,8 +1,8 @@
 import json
-import boto3
 from requests import codes
 import RestrictedPython
 import ast
+import logging
 
 # Define a dictionary of safe Python built-in functions and modules
 safe_builtins = {
@@ -24,8 +24,8 @@ safe_builtins = {
 restricted_globals = {'ast': ast}
 restricted_locals = {}
 
-# The MVP for this function will only support Python
-
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 def lambda_handler(event, context):
 
@@ -35,8 +35,10 @@ def lambda_handler(event, context):
         return construct_response(codes.bad_request, f'Failed to process input code: {str(e)}')
 
     try:
+        logger.debug(f'Compiling input code in restricted envionment: {input_code}')
         restricted_code = RestrictedPython.compile_restricted(
             f'ast.parse({input_code}))')
+        logger.debug(f'Input code compiled successfully: {restricted_code}')
     except Exception as e:
         return construct_response(codes.bad_request, f'Failed to compile input code in restricted envionment, warning this code might be malicious.: {str(e)}')
 

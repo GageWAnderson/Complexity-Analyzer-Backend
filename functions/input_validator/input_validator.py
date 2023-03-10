@@ -17,7 +17,7 @@ lambdaClient = boto3.client('lambda')
 
 
 logger = logging.getLogger()
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 
 
 def lambda_handler(event, context):
@@ -46,9 +46,11 @@ def lambda_handler(event, context):
         if response:
             return response
 
+    logger.debug('Validating input code...')
     if validate_code_security(body_json['inputCode']):
         try:
-            call_complexity_analyzer(body_json['inputCode'], body_json['args'])
+            logger.debug('Calling complexity analyzer...')
+            call_complexity_analyzer(body_json['inputCode'], body_json['args'], user_id)
             return construct_response(codes.ok, 'Input code passed security check')
         except Exception as e:
             return construct_response(codes.bad_request, 'Failed to call complexity analyzer', str(e))
@@ -65,10 +67,10 @@ def validate_code_security(code):
 
     return response['statusCode'] == codes.ok
 
-def call_complexity_analyzer(code, args):
+def call_complexity_analyzer(code, args, user_id):
     lambdaClient.invoke_async(
         FunctionName='code_complexity_analyzer',
-        InvokeArgs=json.dumps({'inputCode': code, 'args': args})
+        InvokeArgs=json.dumps({'inputCode': code, 'args': args, 'user-id': user_id})
     )
 
 
