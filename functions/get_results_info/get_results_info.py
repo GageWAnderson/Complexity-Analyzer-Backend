@@ -4,12 +4,13 @@ import logging
 from requests import codes
 
 s3 = boto3.resource('s3')
-s3Client = boto3.client('s3')
+
+lambdaResource = boto3.resource('lambda')
 
 user_results_s3_bucket = 'complexity-analyzer-results-test'
 
 logger = logging.getLogger()
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 
 
 def lambda_handler(event, context):
@@ -18,6 +19,8 @@ def lambda_handler(event, context):
         user_id = event['params']['header']['user-id']
     except Exception as e:
         return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
+
+    test_invoke_validator()
 
     try:
         results = query_user_results(user_id)
@@ -42,6 +45,14 @@ def construct_response(status_code, body=None, error=None):
             'body': json.dumps({'message': body})
         }
     return response
+
+
+def test_invoke_validator():
+    response = lambdaResource.invoke(
+        FunctionName='code_security_validator',
+        InvocationType='RequestResponse',
+        Payload=json.dumps({'inputCode': "Test Code"}))
+    logger.debug(response)
 
 
 def query_user_results(user_id):
