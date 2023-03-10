@@ -63,7 +63,7 @@ def validate_code_security(code):
         FunctionName='code_security_validator',
         InvocationType='RequestResponse',
         Payload=json.dumps({'inputCode': code})
-    )
+    ).get('Payload').read().decode('utf-8')
     logger.debug(f'Code security validation response: {response}')
     return response['statusCode'] == codes.ok
 
