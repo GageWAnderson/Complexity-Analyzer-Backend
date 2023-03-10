@@ -8,6 +8,7 @@ phases:
       - pip install --upgrade pip
       - pip install -r functions/input_validator/requirements.txt -t input_validator_lib
       - pip install -r functions/get_results_info/requirements.txt -t get_results_lib
+      - pip install -r functions/code_security_validator/requirements.txt -t code_security_validator_lib
   pre_build:
     commands:
       - echo "Running Tests"
@@ -28,12 +29,18 @@ phases:
       - cd ../functions/get_results_info
       - zip -u ../../get_results_deployment_package.zip get_results_info.py
       - cd ../..
+      - cd code_security_validator_lib
+      - zip -r9 ../code_security_validator_deployment_package.zip  .
+      - cd ../functions/code_security_validator
+      - zip -u ../../code_security_validator_deployment_package.zip code_security_validator.py
+      - cd ../..
 
   post_build:
     commands:
       - echo "Updating Lambda function"
       - aws lambda update-function-code --function-name input_validator --zip-file fileb://input_validator_deployment_package.zip
       - aws lambda update-function-code --function-name get_results_info --zip-file fileb://get_results_deployment_package.zip
+      - aws lambda update-function-code --function-name code_security_validator --zip-file fileb://code_security_validator_deployment_package.zip
       - echo "Done"
 artifacts:
   files:
