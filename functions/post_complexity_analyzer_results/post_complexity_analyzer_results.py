@@ -1,8 +1,12 @@
 import json
 import boto3
 from requests import codes
+import logging
 
 s3client = boto3.client('s3')
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 def lambda_handler(event, context):
 
@@ -11,6 +15,7 @@ def lambda_handler(event, context):
         args = event['args']
         complexity = event['complexity']
         user_id = event['user-id']
+        logger.debug(f'Input code: {inputCode}, args: {args}, complexity: {complexity}, user-id: {user_id}')
         post_to_s3(inputCode, args, complexity, user_id)
     except Exception as e:
         return {

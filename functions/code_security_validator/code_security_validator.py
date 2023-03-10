@@ -31,6 +31,7 @@ def lambda_handler(event, context):
 
     try:
         input_code = event['inputCode']
+        logger.debug(f'Input code: {input_code}')
     except Exception as e:
         return construct_response(codes.bad_request, f'Failed to process input code: {str(e)}')
 
