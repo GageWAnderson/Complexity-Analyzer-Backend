@@ -24,8 +24,8 @@ def lambda_handler(event, context):
         post_to_s3(inputCode, args, complexity, complexity_graph, user_id)
     except Exception as e:
         return {
-            'statusCode': codes.bad_request,
-            'body': json.dumps({'message': 'Bad request'})
+            'statusCode': codes.internal_server_error,
+            'body': json.dumps({'error': str(e)})
         }
 
 
@@ -35,6 +35,14 @@ def post_to_s3(inputCode, args, complexity, complexity_graph, user_id):
     timestamp = str(int(time.time()))
     prefix = f'{user_id}/{timestamp}'
     logger.debug(f'Prefix: {prefix}')
+
+    bucket = s3.Bucket(bucket_name)
+    prefix_in_bucket = list(bucket.objects.filter(Prefix=prefix))
+    if len(prefix_in_bucket) > 0:
+        logger.error(
+            f'Prefix {prefix} already exists in bucket {bucket_name}')
+        raise Exception(
+            f'Prefix {prefix} already exists in bucket {bucket_name}')
 
     metadata_object_key = f'{prefix}/metadata.json'
     logger.debug(f'Object key: {metadata_object_key}')
