@@ -23,10 +23,12 @@ logger.setLevel(logging.DEBUG)
 def lambda_handler(event, context):
 
     try:
-        # TODO: Do we need this here since we can call in in the Code Complexity Analyzer Lambda Function?
         user_id = event['params']['header']['user-id']
     except Exception as e:
         return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
+    
+    # TODO: (MAYBE) Validate user ID against Cognito User Pools
+    validate_user_id(user_id)
 
     try:
         body_json = event['body-json']
@@ -124,3 +126,7 @@ def construct_response(status_code, body=None, error=None):
             'body': json.dumps({'message': body})
         }
     return response
+
+def validate_user_id(user_id):
+    # TODO: Consider calling Cognito User Pools to validate user ID
+    return True
