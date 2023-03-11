@@ -34,10 +34,14 @@ def post_to_s3(inputCode, args, complexity, user_id):
     prefix_exists = len(prefix_objs) > 0
 
     if not prefix_exists:
+        logger.debug(f'Creating prefix: {user_id}/')
         bucket.put_object(Key=f'{user_id}/')
 
     timestamp = str(int(time.time()))
     object_key = f'{user_id}/{timestamp}.json'
+
+
+    logger.debug(f'Object key: {object_key}')
 
     s3_object = s3.Object(bucket_name, object_key)
     logger.debug(f'Writing to s3 object: {s3_object}')
