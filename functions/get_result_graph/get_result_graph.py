@@ -1,7 +1,10 @@
 import json
-import boto3
 import logging
 from requests import codes
+import boto3
+import csv
+
+# This function gets the graph to display on the frontend, not to download
 
 s3 = boto3.resource('s3')
 
@@ -12,21 +15,34 @@ logger.setLevel(logging.DEBUG)
 
 
 def lambda_handler(event, context):
-
     try:
         user_id = event['params']['header']['user-id']
+        timestamp = event['params']['header']['timestamp']
     except Exception as e:
         return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
 
     try:
-        results = query_user_results_metadata(user_id)
+        results = get_result_graph_as_json(user_id, timestamp)
         if not results:
             return construct_response(codes.not_found, f'No results found for user {user_id}')
         else:
-            # TODO: Modify response to contain results with user results metadata
             return construct_response(codes.ok, body=json.dumps(results))
     except Exception as e:
-        return construct_response(codes.bad_request, error=f'Error querying user results: {str(e)}')
+        return construct_response(codes.internal_server_error, error=f'Error querying user results: {str(e)}')
+
+
+def get_result_graph_as_json(user_id, timestamp):
+    graph_object = f'{user_id}/{timestamp}/graph.csv'
+    logger.debug(
+        f'Getting user graph objects from bucket {user_results_s3_bucket}, graph_object: {graph_object}')
+
+    try:
+        csv_graph = s3.Object(user_results_s3_bucket, graph_object)
+        csv_data = csv.DictReader(csv_graph.get()['Body'].read().decode('utf-8').splitlines())
+        return list(csv_data)
+    except Exception as e:
+        logger.debug(f'Error getting graph object: {str(e)}')
+        return None
 
 
 def construct_response(status_code, body=None, error=None):
@@ -38,21 +54,6 @@ def construct_response(status_code, body=None, error=None):
     else:
         response = {
             'statusCode': status_code,
-            'body': json.dumps({'user-metadata': body})
+            'body': json.dumps({'results-graph': body})
         }
     return response
-
-
-def query_user_results_metadata(user_id):
-    result = []
-    bucket = s3.Bucket(user_results_s3_bucket)
-    logger.debug(
-        f'Getting user metadata objects from bucket {user_results_s3_bucket}')
-    for obj in bucket.objects.filter(Prefix=user_id):
-        logger.debug(f'Object key: {obj.key}')
-        if obj.key.endswith('metadata.json'):
-            logger.debug(f'Getting metadata object: {obj.key}')
-            metadata_object = s3.Object(user_results_s3_bucket, obj.key)
-            metadata = json.loads(metadata_object.get()['Body'].read())
-            result.append(metadata)
-    return result
