@@ -50,7 +50,9 @@ def query_user_results_metadata(user_id):
         f'Getting user metadata objects from bucket {user_results_s3_bucket}')
     for obj in bucket.objects.filter(Prefix=user_id):
         logger.debug(f'Object key: {obj.key}')
-        logger.debug(
-            f'Sub-Objects: {obj.objects.filter(Prefix="metadata.json")}')
-        result.append(obj.objects.filter(Prefix='metadata.json'))
+        if obj.key.endswith('metadata.json'):
+            logger.debug(f'Getting metadata object: {obj.key}')
+            metadata_object = s3.Object(user_results_s3_bucket, obj.key)
+            metadata = json.loads(metadata_object.get()['Body'].read())
+            result.append(metadata)
     return result
