@@ -23,6 +23,7 @@ def lambda_handler(event, context):
 
     try:
         results = get_result_graph_as_json(user_id, timestamp)
+        logger.debug(f'Graph results: {results}')
         if not results:
             return construct_response(codes.not_found, f'No results found for user {user_id}')
         else:
