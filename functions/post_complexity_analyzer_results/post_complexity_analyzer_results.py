@@ -50,6 +50,7 @@ def post_to_s3(inputCode, args, complexity, complexity_graph, user_id):
     s3_metadata_object = s3.Object(bucket_name, metadata_object_key)
     logger.debug(f'Writing to s3 object: {s3_metadata_object}')
     s3_metadata_object.put(Body=json.dumps({
+        'timestamp': timestamp,
         'inputCode': inputCode,
         'args': args,
         'complexity': complexity,
