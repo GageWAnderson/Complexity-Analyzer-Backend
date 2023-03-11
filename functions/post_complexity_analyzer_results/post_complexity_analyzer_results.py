@@ -31,14 +31,10 @@ def lambda_handler(event, context):
 
 def post_to_s3(inputCode, args, complexity, complexity_graph, user_id):
 
-    bucket = s3.Bucket(bucket_name)
-
     # Timestamps are unique, so we can use them as keys
     timestamp = str(int(time.time()))
-
     prefix = f'{user_id}/{timestamp}'
     logger.debug(f'Prefix: {prefix}')
-    bucket.put_object(Key=prefix)
 
     metadata_object_key = f'{prefix}/metadata.json'
     logger.debug(f'Object key: {metadata_object_key}')
