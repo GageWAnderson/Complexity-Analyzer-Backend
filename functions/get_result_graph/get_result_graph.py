@@ -40,13 +40,12 @@ def get_result_graph_as_json(user_id, timestamp):
     try:
         csv_graph = s3.Object(user_results_s3_bucket, graph_object)
         logger.debug(f'Got graph object: {csv_graph}')
-        csv_data = csv.DictReader(csv_graph.get()['Body'].read().decode('utf-8').splitlines())
-        logger.debug(f'CSV data: {str(csv_data)}')
-        data = []
-        for row in csv_data:
-            data.append(row)
-        logger.debug(f'Graph data as python array: {data}')
-        return data
+        csv_file = csv_graph.get()['Body']
+        logger.debug(f'Got graph file: {csv_file}')
+        csv_reader = csv.DictReader(csv_file)
+        json_data = json.dumps([row for row in csv_reader])
+        logger.debug(f'Graph data as python array: {json_data}')
+        return json_data
     except Exception as e:
         logger.debug(f'Error getting graph object: {str(e)}')
         return None
