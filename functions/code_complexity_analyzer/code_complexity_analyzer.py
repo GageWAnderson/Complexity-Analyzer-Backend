@@ -8,6 +8,8 @@ lambdaClient = boto3.client('lambda')
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+# TODO: Replace with actual complexity data from code complexity analyzer
+dummy_data = 'placeholder,placeholder,placeholder2,placeholder2,placeholder3,placeholder3'
 
 def lambda_handler(event, context):
     try:
@@ -18,7 +20,7 @@ def lambda_handler(event, context):
         logger.debug(
             f'Input code: {inputCode}, args: {args}, user-id: {user_id}')
 
-        publish_results(inputCode, args, 'placeholder', 'placeholder', user_id)
+        publish_results(inputCode, args, 'placeholder', dummy_data, user_id)
 
         return construct_response(codes.ok, 'Called Code Complexity Analyzer')
     except Exception as e:

@@ -41,7 +41,7 @@ def get_result_graph_as_json(user_id, timestamp):
         csv_graph = s3.Object(user_results_s3_bucket, graph_object)
         logger.debug(f'Got graph object: {csv_graph}')
         csv_data = csv.DictReader(csv_graph.get()['Body'].read().decode('utf-8').splitlines())
-        logger.debug(f'CSV data: {csv_data}')
+        logger.debug(f'CSV data: {str(csv_data)}')
         data = []
         for row in csv_data:
             data.append(row)
