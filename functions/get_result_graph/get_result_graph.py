@@ -23,7 +23,6 @@ def lambda_handler(event, context):
 
     try:
         results = get_result_graph_as_json(user_id, timestamp)
-        logger.debug(f'Graph results: {results}')
         if not results or len(results) == 0:
             return construct_response(codes.not_found, f'No results found for user {user_id}')
         else:
@@ -34,18 +33,12 @@ def lambda_handler(event, context):
 
 def get_result_graph_as_json(user_id, timestamp):
     graph_object = f'{user_id}/{timestamp}/graph.csv'
-    logger.debug(
-        f'Getting user graph objects from bucket {user_results_s3_bucket}, graph_object: {graph_object}')
 
     try:
         csv_graph = s3.Object(user_results_s3_bucket, graph_object)
-        logger.debug(f'Got graph object: {csv_graph}')
         csv_file = csv_graph.get()['Body'].read().decode('utf-8')
-        logger.debug(f'Got graph file: {csv_file}')
         csv_reader = csv.DictReader(csv_file)
-        json_data = json.dumps([row for row in csv_reader])
-        logger.debug(f'Graph data as python array: {json_data}')
-        return json_data
+        return [row for row in csv_reader]
     except Exception as e:
         logger.debug(f'Error getting graph object: {str(e)}')
         raise e
