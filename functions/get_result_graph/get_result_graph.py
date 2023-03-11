@@ -42,7 +42,11 @@ def get_result_graph_as_json(user_id, timestamp):
         logger.debug(f'Got graph object: {csv_graph}')
         csv_data = csv.DictReader(csv_graph.get()['Body'].read().decode('utf-8').splitlines())
         logger.debug(f'CSV data: {csv_data}')
-        return [row for row in csv_data]
+        data = []
+        for row in csv_data:
+            data.append(row)
+        logger.debug(f'Graph data as python array: {data}')
+        return data
     except Exception as e:
         logger.debug(f'Error getting graph object: {str(e)}')
         return None
