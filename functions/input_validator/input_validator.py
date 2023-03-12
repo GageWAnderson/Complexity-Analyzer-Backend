@@ -15,6 +15,9 @@ number_of_arg_fields = 3
 
 lambdaClient = boto3.client('lambda')
 
+#TODO: Make an enumeration of allowed arg type strings in a Lambda Layer
+allowed_arg_types = ['int', 'string']
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -49,7 +52,7 @@ def lambda_handler(event, context):
             return response
 
     logger.debug('Validating input code...')
-    if validate_code_security(body_json['inputCode']):
+    if validate_code_security(body_json['inputCode'], body_json['args']):
         try:
             logger.debug('Calling complexity analyzer...')
             call_complexity_analyzer(
@@ -61,11 +64,11 @@ def lambda_handler(event, context):
         return construct_response(codes.bad_request, 'Input code failed security check, warning: this may be a malicious request')
 
 
-def validate_code_security(code):
+def validate_code_security(code, args):
     response = lambdaClient.invoke(
         FunctionName='code_security_validator',
         InvocationType='RequestResponse',
-        Payload=json.dumps({'inputCode': code})
+        Payload=json.dumps({'args': args, 'inputCode': code})
     ).get('Payload').read().decode('utf-8')
 
     logger.debug(f'Code security validation response: {response}')
@@ -103,6 +106,8 @@ def validate_argument(argJsonObject):
         return construct_response(codes.bad_request, 'Missing argument name field'), False
     elif 'argType' not in argJsonObject:
         return construct_response(codes.bad_request, 'Missing argument type field'), False
+    elif argJsonObject['argType'] not in allowed_arg_types:
+        return construct_response(codes.bad_request, 'Invalid argument type'), False
     elif 'variable' not in argJsonObject:
         return construct_response(codes.bad_request, 'Missing variable field'), False
     elif len(argJsonObject) != number_of_arg_fields:
