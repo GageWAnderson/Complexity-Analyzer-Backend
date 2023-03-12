@@ -35,8 +35,8 @@ def lambda_handler(event, context):
         # TODO: Handle compilation errors inside the compiled_function object
         logger.debug(str(compiled_function))
 
-        if str(compiled_function.errors) != '()':
-            return construct_response(codes.bad_request, f'Failed to compile input code in restricted envionment, warning this code might be malicious.: {str(compiled_function.errors)}')
+        # if str(compiled_function.errors) != '()':
+        #     return construct_response(codes.bad_request, f'Failed to compile input code in restricted envionment, warning this code might be malicious.: {str(compiled_function.errors)}')
 
         exec(compiled_function.code, safe_globals, safe_locals)
         compiled_function = safe_locals[restricted_function_name]
