@@ -100,10 +100,11 @@ def validate_all_arguments(json):
     else:
         return None
 
-
 def validate_argument(argJsonObject):
-    if 'argName' not in argJsonObject:
+    if 'argName' not in argJsonObject or not argJsonObject['argName']:
         return construct_response(codes.bad_request, 'Missing argument name field'), False
+    elif not argJsonObject['argName'].isIdentifier():
+        return construct_response(codes.bad_request, 'Invalid argument name'), False
     elif 'argType' not in argJsonObject:
         return construct_response(codes.bad_request, 'Missing argument type field'), False
     elif argJsonObject['argType'] not in allowed_arg_types:
