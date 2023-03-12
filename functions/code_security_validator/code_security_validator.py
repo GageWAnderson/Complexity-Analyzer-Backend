@@ -30,13 +30,15 @@ def lambda_handler(event, context):
         return construct_response(codes.bad_request, f'Failed to process input code: {str(e)}')
 
     try:
+        logger.debug('Compiling input code in restricted envionment')
         compiled_function = compile_restricted_function(
             parseArgsToCommaDelimitedList(args), input_function_body, restricted_function_name)
+
         # TODO: Handle compilation errors inside the compiled_function object
         logger.debug(str(compiled_function))
 
-        # if str(compiled_function.errors) != '()':
-        #     return construct_response(codes.bad_request, f'Failed to compile input code in restricted envionment, warning this code might be malicious.: {str(compiled_function.errors)}')
+        if str(compiled_function.errors) != '()':
+            return construct_response(codes.bad_request, f'Failed to compile input code in restricted envionment, warning this code might be malicious.: {str(compiled_function.errors)}')
 
         exec(compiled_function.code, safe_globals, safe_locals)
         compiled_function = safe_locals[restricted_function_name]
@@ -67,10 +69,12 @@ def runCompiledFunctionWithDefaultArgs(compiled_function, default_args):
 
 
 def parseArgsToCommaDelimitedList(args):
+    logger.debug(f'Parsing args to comma delimited list: {args}')
     result = []
     for arg in args:
         result.append(arg['argName'])
-    return result.join(',')
+    logger.debug(f'Parsed args to comma delimited list: {",".join(result)}')
+    return ','.join(result)
 
 
 def getDefaultArgs(args):
