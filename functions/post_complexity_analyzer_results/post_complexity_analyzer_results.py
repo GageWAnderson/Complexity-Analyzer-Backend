@@ -61,4 +61,12 @@ def post_to_s3(inputCode, args, complexity, complexity_graph, user_id):
     logger.debug(f'Object key: {complexity_graph_object_key}')
     s3_graph_object = s3.Object(bucket_name, complexity_graph_object_key)
     logger.debug(f'Writing to s3 object: {s3_graph_object}')
-    s3_graph_object.put(Body=complexity_graph)
+    s3_graph_object.put(Body=parseToCsv(complexity_graph))
+
+def parseToCsv(complexity_graph):
+    result = []
+    for entry in complexity_graph:
+        result.append(entry[0])
+        result.append(entry[1])
+    return ','.join(result)
+        
