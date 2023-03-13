@@ -109,8 +109,9 @@ def get_complexity_from_runtime_graph(runtime_graph):
     return "O(n)" # TODO: Calculate complexity from runtime graph
 
 def publish_results(inputCode, args, complexity, complexity_graph, user_id):
-    lambdaClient.invoke_async(
+    lambdaClient.invoke(
         FunctionName='post_complexity_analyzer_results',
+        InvocationType='RequestResponse',
         InvokeArgs=json.dumps({
             'inputCode': inputCode,
             'args': args,
