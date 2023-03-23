@@ -1,8 +1,10 @@
+from io import StringIO
 import json
 import boto3
 from requests import codes
 import logging
 import time
+import csv
 
 s3 = boto3.resource('s3')
 bucket_name = 'complexity-analyzer-results-test'
@@ -70,8 +72,7 @@ def post_to_s3(inputCode, args, complexity, complexity_graph, user_id):
     
 
 def parseToCsv(complexity_graph):
-    result = ''
-    for entry in complexity_graph:
-        result += ','.join(str(entry[0]), str(entry[1])) + '\n'
-    logger.debug(f'parseToCsv result: {str(result)}')
-    return result
+    csv_data = StringIO()
+    csv_writer = csv.writer(csv_data)
+    csv_writer.writerows(complexity_graph)
+    return csv_data.getvalue().encode('utf-8')
