@@ -46,25 +46,34 @@ def post_to_s3(inputCode, args, complexity, complexity_graph, user_id):
         raise Exception(
             f'Prefix {prefix} already exists in bucket {bucket_name}')
 
-    metadata_object_key = f'{prefix}/metadata.json'
-    logger.debug(f'Object key: {metadata_object_key}')
+    try:
+        metadata_object_key = f'{prefix}/metadata.json'
+        logger.debug(f'Object key: {metadata_object_key}')
 
-    s3_metadata_object = s3.Object(bucket_name, metadata_object_key)
-    logger.debug(f'Writing to s3 object: {s3_metadata_object}')
-    s3_metadata_object.put(Body=json.dumps({
-        'timestamp': timestamp,
-        'inputCode': inputCode,
-        'args': args,
-        'complexity': complexity,
-        'user-id': user_id
-    }))
+        s3_metadata_object = s3.Object(bucket_name, metadata_object_key)
+        logger.debug(f'Writing to s3 object: {s3_metadata_object}')
+        s3_metadata_object.put(Body=json.dumps({
+            'timestamp': timestamp,
+            'inputCode': inputCode,
+            'args': args,
+            'complexity': complexity,
+            'user-id': user_id
+        }))
+    except Exception as e:
+        logger.error(f'Failed to write to s3 metadata.json object: {e}')
+        raise e
 
     try:
         complexity_graph_object_key = f'{prefix}/graph.csv'
+        logger.debug(f'complexity_graph_object_key: {complexity_graph_object_key}')
+
+        s3_graph_object = s3.Object(bucket_name, complexity_graph_object_key)
+        logger.debug(f'Writing to s3 object: {s3_graph_object}')
+
         graph_bytes = parseToCsv(complexity_graph)
         logger.debug(f'graph_bytes: {graph_bytes}')
-        s3.put_object(Bucket=bucket_name, Key=complexity_graph_object_key,
-                    Body=graph_bytes)
+
+        s3_graph_object.put(Body=graph_bytes)
         logger.debug('Successfully wrote to s3 graph.csv object')
     except Exception as e:
         logger.error(f'Failed to write to s3 graph.csv object: {e}')
