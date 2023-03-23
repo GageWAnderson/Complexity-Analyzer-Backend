@@ -17,7 +17,7 @@ default_int_arg_value = 0
 default_string_arg_value = ''
 
 # TODO: Think Harder about what this should be
-input_code_timeout_seconds = 1
+input_code_timeout_seconds = 5.0
 
 
 def lambda_handler(event, context):
@@ -62,8 +62,8 @@ def runCompiledFunctionWithDefaultArgs(compiled_function, default_args):
         result = compiled_function(*default_args)
     except:
         raise Exception('Timeout')
-    finally:
-        timer.cancel()
+
+    timer.cancel()
 
     return result
 
