@@ -36,7 +36,8 @@ def lambda_handler(event, context):
         args = event['args']
         user_id = event['user-id']
 
-        compiled_function = compile_input_function_restricted(input_function_body, parseArgsToCommaDelimitedList(args))
+        compiled_function = compile_input_function_restricted(
+            input_function_body, parseArgsToCommaDelimitedList(args))
 
         logger.debug(f'Running code with variable input: {args}')
         runtime_graph = run_code_with_variable_input(compiled_function, args)
@@ -45,7 +46,8 @@ def lambda_handler(event, context):
 
         complexity = get_complexity_from_runtime_graph(runtime_graph)
 
-        publish_results(input_function_body, args, complexity, runtime_graph, user_id)
+        publish_results(input_function_body, args,
+                        complexity, runtime_graph, user_id)
 
         return construct_response(codes.ok, 'Called Code Complexity Analyzer')
     except Exception as e:
@@ -67,56 +69,69 @@ def compile_input_function_restricted(input_function_body, args):
         exec(compiled_function.code, safe_globals, safe_locals)
         return safe_locals[restricted_function_name]
     except Exception as e:
-        logger.debug("Failed to compile input code in restricted envionment, warning this code might be malicious.")
+        logger.debug(
+            "Failed to compile input code in restricted envionment, warning this code might be malicious.")
         raise e
+
 
 def run_code_with_variable_input(compiled_function, args):
     runtime_graph = []
     variable_arg, variable_arg_type = getVariableArg(args)
     arg_range = getArgRange(variable_arg)
-    step_size = getStepSize(arg_range) # TODO: How many steps can I do before timeout?
+    # TODO: How many steps can I do before timeout?
+    step_size = getStepSize(arg_range)
 
     logger.debug(f'arg_range: {arg_range}, step_size: {step_size}')
     for i in range(number_of_steps):
-        variable_arg_value = getArgValue(variable_arg_type, arg_range, step_size, i)
+        variable_arg_value = getArgValue(
+            variable_arg_type, arg_range, step_size, i)
         logger.debug(f'variable_arg_value: {variable_arg_value}')
         args_for_this_run = getArgsForThisRun(args, variable_arg_value)
         logger.debug(f'args_for_this_run: {args_for_this_run}')
-        logger.debug(f'i: {i}, Running code with args: {args_for_this_run} (variable arg value: {variable_arg_value})')
+        logger.debug(
+            f'i: {i}, Running code with args: {args_for_this_run} (variable arg value: {variable_arg_value})')
         try:
-            runtime = run_and_time_code_execution(compiled_function, args_for_this_run)
+            runtime = run_and_time_code_execution(
+                compiled_function, args_for_this_run)
             runtime_graph.append((variable_arg_value, runtime))
             logger.debug(f'Code execution took {runtime} seconds')
         except Exception as e:
             # Some inputs may fail, don't stop the whole execution since others may succeed
-            logger.debug(f'Code execution failed, skipping this entry in the graph: {e}')
-            
-    
+            logger.debug(
+                f'Code execution failed, skipping this entry in the graph: {e}')
+
     return runtime_graph
+
 
 def run_and_time_code_execution(compiled_function, args):
     def timeout_handler():
-        raise Exception('Timeout')
+        raise TimeoutError()
 
     timer = threading.Timer(input_code_timeout_seconds, timeout_handler)
     timer.start()
 
     try:
         start_time = time.time()
+        logger.debug(f'Running code with args: {args}')
         compiled_function(*args)
-    except Exception as e:
-        raise e
-    finally:
-        timer.cancel()
-    
+    except TimeoutError as e1:
+        logger.debug('Code execution timed out')
+        raise e1
+    except Exception as e2:
+        logger.debug(f'Code execution failed: {str(e2)}')
+        raise e2
+
+    timer.cancel()
+
     end_time = time.time()
     return end_time - start_time
+
 
 def get_complexity_from_runtime_graph(runtime_graph):
     logger.debug(f'Calculating complexity from runtime graph: {runtime_graph}')
     points = np.array(runtime_graph)
-    x_axis = points[:,0]
-    y_axis = points[:,1]
+    x_axis = points[:, 0]
+    y_axis = points[:, 1]
 
     # Find the Polynomial that fits the data
     coefficients = np.polyfit(x_axis, y_axis, 3)
@@ -124,6 +139,7 @@ def get_complexity_from_runtime_graph(runtime_graph):
 
     # TODO: MVP+ Support non-polynomial complexity
     return format_complexity(complexity)
+
 
 def format_complexity(complexity):
     if complexity == 0:
@@ -137,8 +153,10 @@ def format_complexity(complexity):
     else:
         return 'Exponential'
 
+
 def publish_results(inputCode, args, complexity, complexity_graph, user_id):
-    logger.debug(f'Publishing results to post_complexity_analyzer_results (user_id: {user_id}')
+    logger.debug(
+        f'Publishing results to post_complexity_analyzer_results (user_id: {user_id}')
     lambdaClient.invoke(
         FunctionName='post_complexity_analyzer_results',
         InvocationType='Event',
@@ -151,6 +169,7 @@ def publish_results(inputCode, args, complexity, complexity_graph, user_id):
         })
     )
 
+
 def parseArgsToCommaDelimitedList(args):
     logger.debug(f'Parsing args to comma delimited list: {args}')
     result = []
@@ -158,6 +177,7 @@ def parseArgsToCommaDelimitedList(args):
         result.append(arg['argName'])
     logger.debug(f'Parsed args to comma delimited list: {",".join(result)}')
     return ','.join(result)
+
 
 def construct_response(status_code, body=None, error=None):
     if error:
@@ -172,17 +192,20 @@ def construct_response(status_code, body=None, error=None):
         }
     return response
 
+
 def getArgRange(variableArg):
     if variableArg["argType"] == "int":
-        return [0, max_int_size] # Vary Int Size
+        return [0, max_int_size]  # Vary Int Size
     elif variableArg["argType"] == "string":
-        return [0, max_string_length] # Vary Length of input String
+        return [0, max_string_length]  # Vary Length of input String
     else:
         # TODO: Use the enumeration of argTypes in the Lambda Layer
         raise Exception("Unsupported variable arg type")
 
+
 def getStepSize(arg_range):
     return (arg_range[1] - arg_range[0]) // number_of_steps
+
 
 def getArgsForThisRun(args, variable_arg_value):
     result = []
@@ -199,6 +222,7 @@ def getArgsForThisRun(args, variable_arg_value):
             else:
                 raise Exception("Unsupported arg type")
     return result
+
 
 def getArgValue(arg_type, arg_range, step_size, step_number):
     try:
