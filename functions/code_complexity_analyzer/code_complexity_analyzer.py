@@ -6,6 +6,7 @@ import boto3
 import logging
 from RestrictedPython import safe_builtins, compile_restricted_function
 import ast
+import numpy as np
 
 lambdaClient = boto3.client('lambda')
 
@@ -16,6 +17,9 @@ safe_globals = {'ast': ast, '__builtins__': safe_builtins, '_getiter_': iter}
 max_int_size = 1000000000
 max_string_length = 1000
 number_of_steps = 10
+
+default_int_value = 10
+default_string_value = "Hello World"
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -74,7 +78,9 @@ def run_code_with_variable_input(compiled_function, args):
     logger.debug(f'arg_range: {arg_range}, step_size: {step_size}')
     for i in range(number_of_steps):
         variable_arg_value = getArgValue(arg_range, step_size, i)
+        logger.debug(f'variable_arg_value: {variable_arg_value}')
         args_for_this_run = getArgsForThisRun(args, variable_arg_value)
+        logger.debug(f'args_for_this_run: {args_for_this_run}')
         logger.debug(f'i: {i}, Running code with args: {args_for_this_run} (variable arg value: {variable_arg_value})')
         try:
             runtime = run_and_time_code_execution(compiled_function, args_for_this_run)
@@ -157,12 +163,10 @@ def getArgRange(variableArg):
 def getStepSize(arg_range):
     return (arg_range[1] - arg_range[0]) / number_of_steps
 
-default_int_value = 10
-default_string_value = "Hello World"
-
 def getArgsForThisRun(args, variable_arg_value):
     result = []
     for arg in args:
+        logger.debug(f'arg: {arg}')
         if arg['variable']:
             result.append(variable_arg_value)
         else:
