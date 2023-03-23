@@ -179,10 +179,15 @@ def getArgsForThisRun(args, variable_arg_value):
     return result
 
 def getArgValue(arg_type, arg_range, step_size, step_number):
-    if arg_type == "int":
-        return arg_range[0] + (step_size * step_number)
-    elif arg_type == "string":
-        return "a" * (arg_range[0] + (step_size * step_number))
+    try:
+        if arg_type == "int":
+            return arg_range[0] + (step_size * step_number)
+        elif arg_type == "string":
+            return "a" * (arg_range[0] + (step_size * step_number))
+    except Exception as e:
+        logger.debug(f'Failed to get arg value: {e}')
+        raise e
+
 
 def getVariableArg(args):
     for arg in args:
