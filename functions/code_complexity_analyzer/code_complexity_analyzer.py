@@ -78,12 +78,12 @@ def run_code_with_variable_input(compiled_function, args):
         logger.debug(f'i: {i}, Running code with args: {args_for_this_run} (variable arg value: {variable_arg_value})')
         try:
             runtime = run_and_time_code_execution(compiled_function, args_for_this_run)
+            runtime_graph.append((variable_arg_value, runtime))
             logger.debug(f'Code execution took {runtime} seconds')
         except Exception as e:
             # Some inputs may fail, don't stop the whole execution since others may succeed
             logger.debug(f'Code execution failed, skipping this entry in the graph: {e}')
-        else:
-            runtime_graph.append((variable_arg_value, runtime))
+            
     
     return runtime_graph
 
