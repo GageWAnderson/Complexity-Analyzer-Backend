@@ -38,7 +38,7 @@ def lambda_handler(event, context):
         logger.debug(str(compiled_function))
 
         if str(compiled_function.errors) != '()':
-            return construct_response(codes.bad_request, f'Failed to compile input code in restricted envionment, warning this code might be malicious.: {str(compiled_function.errors)}')
+            return construct_response(codes.bad_request, f'Compiled Code has errors: {str(compiled_function.errors)}')
 
         exec(compiled_function.code, safe_globals, safe_locals)
         compiled_function = safe_locals[restricted_function_name]
@@ -53,15 +53,19 @@ def lambda_handler(event, context):
 
 def runCompiledFunctionWithDefaultArgs(compiled_function, default_args):
     def timeout_handler():
-        raise Exception('Timeout')
+        raise TimeoutError()
 
     timer = threading.Timer(input_code_timeout_seconds, timeout_handler)
     timer.start()
 
     try:
         result = compiled_function(*default_args)
-    except:
+    except TimeoutError as e1:
+        logger.error(f'Timeout running compiled function: {str(e1)}')
         raise Exception('Timeout')
+    except Exception as e2:
+        logger.error(f'Error running compiled function: {str(e2)}')
+        raise e2
 
     timer.cancel()
 
