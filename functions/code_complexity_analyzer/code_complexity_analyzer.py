@@ -172,8 +172,11 @@ def getArgsForThisRun(args, variable_arg_value):
                 raise Exception("Unsupported arg type")
     return result
 
-def getArgValue(arg_range, step_size, step_number):
-    return arg_range[0] + (step_size * step_number)
+def getArgValue(arg_type, arg_range, step_size, step_number):
+    if arg_type == "int":
+        return arg_range[0] + (step_size * step_number)
+    elif arg_type == "string":
+        return "a" * (arg_range[0] + (step_size * step_number))
 
 def getVariableArg(args):
     for arg in args:
