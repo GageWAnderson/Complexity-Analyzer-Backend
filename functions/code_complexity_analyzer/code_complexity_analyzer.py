@@ -106,9 +106,11 @@ def run_and_time_code_execution(compiled_function, args):
     return end_time - start_time
 
 def get_complexity_from_runtime_graph(runtime_graph):
+    logger.debug(f'Calculating complexity from runtime graph: {runtime_graph}')
     return "O(n)" # TODO: Calculate complexity from runtime graph
 
 def publish_results(inputCode, args, complexity, complexity_graph, user_id):
+    logger.debug(f'Publishing results to post_complexity_analyzer_results (user_id: {user_id}')
     lambdaClient.invoke(
         FunctionName='post_complexity_analyzer_results',
         InvocationType='RequestResponse',
@@ -120,6 +122,7 @@ def publish_results(inputCode, args, complexity, complexity_graph, user_id):
             'user-id': user_id
         })
     )
+    logger.debug('Published results to post_complexity_analyzer_results')
 
 def parseArgsToCommaDelimitedList(args):
     logger.debug(f'Parsing args to comma delimited list: {args}')
