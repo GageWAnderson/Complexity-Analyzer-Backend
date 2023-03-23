@@ -59,16 +59,21 @@ def post_to_s3(inputCode, args, complexity, complexity_graph, user_id):
         'user-id': user_id
     }))
 
-    complexity_graph_object_key = f'{prefix}/graph.csv'
-    logger.debug(f'Object key: {complexity_graph_object_key}')
-    s3_graph_object = s3.Object(bucket_name, complexity_graph_object_key)
-    logger.debug(f'Writing to s3 object: {s3_graph_object}')
-    s3_graph_object.put(Body=complexity_graph)
+    try:
+        complexity_graph_object_key = f'{prefix}/graph.csv'
+        logger.debug(f'Object key: {complexity_graph_object_key}')
+        s3_graph_object = s3.Object(bucket_name, complexity_graph_object_key)
+        logger.debug(f'Writing to s3 object: {s3_graph_object}')
+        s3_graph_object.put(Body=complexity_graph)
 
-    complexity_graph_object_key = f'{prefix}/graph.csv'
-    s3.put_object(Bucket=bucket_name, Key=complexity_graph_object_key,
-                  Body=parseToCsv(complexity_graph))
-    logger.debug('Successfully wrote to s3 graph.csv object')
+        complexity_graph_object_key = f'{prefix}/graph.csv'
+        s3.put_object(Bucket=bucket_name, Key=complexity_graph_object_key,
+                    Body=parseToCsv(complexity_graph))
+        logger.debug('Successfully wrote to s3 graph.csv object')
+    except Exception as e:
+        logger.debug(f'Failed to write to s3 graph.csv object {e}')
+        logger.error(f'Failed to write to s3 graph.csv object: {e}')
+        raise e
     
 
 def parseToCsv(complexity_graph):
