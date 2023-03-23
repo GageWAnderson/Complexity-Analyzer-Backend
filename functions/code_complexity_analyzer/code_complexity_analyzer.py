@@ -160,7 +160,7 @@ def getArgRange(variableArg):
         raise Exception("Unsupported variable arg type")
 
 def getStepSize(arg_range):
-    return (arg_range[1] - arg_range[0]) / number_of_steps
+    return (arg_range[1] - arg_range[0]) // number_of_steps
 
 def getArgsForThisRun(args, variable_arg_value):
     result = []
