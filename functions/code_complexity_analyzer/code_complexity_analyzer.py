@@ -6,6 +6,7 @@ import boto3
 import logging
 from RestrictedPython import safe_builtins, compile_restricted_function
 import ast
+import numpy as np
 
 lambdaClient = boto3.client('lambda')
 
@@ -113,7 +114,29 @@ def run_and_time_code_execution(compiled_function, args):
 
 def get_complexity_from_runtime_graph(runtime_graph):
     logger.debug(f'Calculating complexity from runtime graph: {runtime_graph}')
-    return "O(n)" # TODO: Calculate complexity from runtime graph
+    points = np.array(runtime_graph)
+    x_axis = points[:,0]
+    y_axis = points[:,1]
+
+    # Find the Polynomial that fits the data
+    coefficients = np.polyfit(x_axis, y_axis, 3)
+    complexity = len(coefficients) - 1
+
+    # TODO: MVP+ Support non-polynomial complexity
+
+    return format_complexity(complexity)
+
+def format_complexity(complexity):
+    if complexity == 0:
+        return 'Constant'
+    elif complexity == 1:
+        return 'Linear'
+    elif complexity == 2:
+        return 'Quadratic'
+    elif complexity == 3:
+        return 'Cubic'
+    else:
+        return 'Exponential'
 
 def publish_results(inputCode, args, complexity, complexity_graph, user_id):
     logger.debug(f'Publishing results to post_complexity_analyzer_results (user_id: {user_id}')
