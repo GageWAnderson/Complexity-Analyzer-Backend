@@ -71,12 +71,13 @@ def compile_input_function_restricted(input_function_body, args):
 
 def run_code_with_variable_input(compiled_function, args):
     runtime_graph = []
-    arg_range = getArgRange(getVariableArg(args))
+    variable_arg, variable_arg_type = getVariableArg(args)
+    arg_range = getArgRange(variable_arg)
     step_size = getStepSize(arg_range) # TODO: How many steps can I do before timeout?
 
     logger.debug(f'arg_range: {arg_range}, step_size: {step_size}')
     for i in range(number_of_steps):
-        variable_arg_value = getArgValue(arg_range, step_size, i)
+        variable_arg_value = getArgValue(variable_arg_type, arg_range, step_size, i)
         logger.debug(f'variable_arg_value: {variable_arg_value}')
         args_for_this_run = getArgsForThisRun(args, variable_arg_value)
         logger.debug(f'args_for_this_run: {args_for_this_run}')
@@ -192,5 +193,5 @@ def getArgValue(arg_type, arg_range, step_size, step_number):
 def getVariableArg(args):
     for arg in args:
         if arg['variable']:
-            return arg
+            return arg, arg['argType']
     raise Exception("No variable arg found")
