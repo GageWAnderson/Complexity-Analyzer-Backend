@@ -117,9 +117,9 @@ def get_complexity_from_runtime_graph(runtime_graph):
 
 def publish_results(inputCode, args, complexity, complexity_graph, user_id):
     logger.debug(f'Publishing results to post_complexity_analyzer_results (user_id: {user_id}')
-    response = lambdaClient.invoke(
+    lambdaClient.invoke(
         FunctionName='post_complexity_analyzer_results',
-        InvocationType='RequestResponse',
+        InvocationType='Event',
         Payload=json.dumps({
             'inputCode': inputCode,
             'args': args,
@@ -128,8 +128,6 @@ def publish_results(inputCode, args, complexity, complexity_graph, user_id):
             'user-id': user_id
         })
     )
-    logger.debug(f'Published results to post_complexity_analyzer_results: {response["Payload"].read().decode("utf-8")}')
-    logger.debug('Published results to post_complexity_analyzer_results')
 
 def parseArgsToCommaDelimitedList(args):
     logger.debug(f'Parsing args to comma delimited list: {args}')

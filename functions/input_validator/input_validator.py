@@ -77,18 +77,12 @@ def validate_code_security(code, args):
 
 
 def call_complexity_analyzer(code, args, user_id):
-    # lambdaClient.invoke_async(
-    #     FunctionName='code_complexity_analyzer',
-    #     InvokeArgs=json.dumps(
-    #         {'inputCode': code, 'args': args, 'user-id': user_id})
-    # )
-    response = lambdaClient.invoke(
+    lambdaClient.invoke(
         FunctionName='code_complexity_analyzer',
-        InvocationType='RequestResponse',
+        InvocationType='Event',
         Payload=json.dumps(
             {'inputCode': code, 'args': args, 'user-id': user_id})
     )
-    logger.debug(f'Complexity analyzer response: {str(response["Payload"].read())}')
 
 
 def validate_all_arguments(json):
