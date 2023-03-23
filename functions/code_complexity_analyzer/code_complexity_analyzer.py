@@ -6,7 +6,6 @@ import boto3
 import logging
 from RestrictedPython import safe_builtins, compile_restricted_function
 import ast
-import numpy as np
 
 lambdaClient = boto3.client('lambda')
 
