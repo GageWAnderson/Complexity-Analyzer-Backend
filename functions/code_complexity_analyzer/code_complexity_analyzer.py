@@ -120,7 +120,7 @@ def publish_results(inputCode, args, complexity, complexity_graph, user_id):
     lambdaClient.invoke(
         FunctionName='post_complexity_analyzer_results',
         InvocationType='RequestResponse',
-        InvokeArgs=json.dumps({
+        Payload=json.dumps({
             'inputCode': inputCode,
             'args': args,
             'complexity': complexity,
