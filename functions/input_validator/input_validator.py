@@ -15,7 +15,7 @@ number_of_arg_fields = 3
 
 lambdaClient = boto3.client('lambda')
 
-#TODO: Make an enumeration of allowed arg type strings in a Lambda Layer
+# TODO: Make an enumeration of allowed arg type strings in a Lambda Layer
 allowed_arg_types = ['int', 'string']
 
 
@@ -29,7 +29,7 @@ def lambda_handler(event, context):
         user_id = event['params']['header']['user-id']
     except Exception as e:
         return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
-    
+
     # TODO: (MAYBE) Validate user ID against Cognito User Pools
     validate_user_id(user_id)
 
@@ -77,9 +77,15 @@ def validate_code_security(code, args):
 
 
 def call_complexity_analyzer(code, args, user_id):
-    lambdaClient.invoke_async(
+    # lambdaClient.invoke_async(
+    #     FunctionName='code_complexity_analyzer',
+    #     InvokeArgs=json.dumps(
+    #         {'inputCode': code, 'args': args, 'user-id': user_id})
+    # )
+    lambdaClient.invoke(
         FunctionName='code_complexity_analyzer',
-        InvokeArgs=json.dumps(
+        InvocationType='RequestResponse',
+        Payload=json.dumps(
             {'inputCode': code, 'args': args, 'user-id': user_id})
     )
 
@@ -100,11 +106,12 @@ def validate_all_arguments(json):
     else:
         return None
 
+
 def validate_argument(argJsonObject):
     if 'argName' not in argJsonObject or not argJsonObject['argName']:
         return construct_response(codes.bad_request, 'Missing argument name field'), False
     elif not str.isidentifier(argJsonObject['argName']):
-        
+
         return construct_response(codes.bad_request, 'Invalid argument name'), False
     elif 'argType' not in argJsonObject:
         return construct_response(codes.bad_request, 'Missing argument type field'), False
@@ -133,6 +140,7 @@ def construct_response(status_code, body=None, error=None):
             'body': json.dumps({'message': body})
         }
     return response
+
 
 def validate_user_id(user_id):
     # TODO: Consider calling Cognito User Pools to validate user ID
