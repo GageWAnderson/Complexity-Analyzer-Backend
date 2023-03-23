@@ -82,12 +82,13 @@ def call_complexity_analyzer(code, args, user_id):
     #     InvokeArgs=json.dumps(
     #         {'inputCode': code, 'args': args, 'user-id': user_id})
     # )
-    lambdaClient.invoke(
+    response = lambdaClient.invoke(
         FunctionName='code_complexity_analyzer',
         InvocationType='RequestResponse',
         Payload=json.dumps(
             {'inputCode': code, 'args': args, 'user-id': user_id})
     )
+    logger.debug(f'Complexity analyzer response: {str(response)}')
 
 
 def validate_all_arguments(json):
