@@ -88,7 +88,7 @@ def call_complexity_analyzer(code, args, user_id):
         Payload=json.dumps(
             {'inputCode': code, 'args': args, 'user-id': user_id})
     )
-    logger.debug(f'Complexity analyzer response: {str(response)}')
+    logger.debug(f'Complexity analyzer response: {str(response["Payload"].read())}')
 
 
 def validate_all_arguments(json):
