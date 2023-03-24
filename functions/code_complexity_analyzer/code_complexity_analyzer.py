@@ -16,7 +16,7 @@ safe_locals = {}
 safe_globals = {'ast': ast, '__builtins__': safe_builtins, '_getiter_': iter}
 
 # TODO: Think Harder about what this should be
-max_int_size = 1000000000
+max_int_size = 1000
 max_string_length = 1000
 max_list_size = 100
 number_of_steps = 100
@@ -32,7 +32,8 @@ logger.setLevel(logging.DEBUG)
 restricted_function_name = 'restricted_function'
 
 # Defines the timeout for 1 run of the input code
-input_code_timeout_seconds = 1
+# input_code_timeout_seconds * number_of_steps < function timeout
+input_code_timeout_seconds = 5
 
 
 def lambda_handler(event, context):
