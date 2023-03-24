@@ -21,6 +21,8 @@ max_string_length = 1000
 max_list_size = 100
 number_of_steps = 100
 
+max_polynomial_degree = 10
+
 default_int_value = 10
 default_string_value = "Hello World"
 default_list_of_ints_value = [1]
@@ -140,11 +142,28 @@ def get_complexity_from_runtime_graph(runtime_graph):
     y_axis = points[:, 1]
 
     # Find the Polynomial that fits the data
-    coefficients = np.polyfit(x_axis, y_axis, 3)
-    complexity = len(coefficients) - 1
+    best_fit, best_coefficients = find_best_polyfit(x_axis, y_axis, max_polynomial_degree)
+    # TODO: Compare best_fit from polynomial regression to best_fit from other complexity models
+
+    complexity = len(best_coefficients) - 1
 
     # TODO: MVP+ Support non-polynomial complexity
     return format_complexity(complexity)
+
+
+def find_best_polyfit(x, y, n):
+    best_fit = None
+    best_coefficients = None
+    best_error = float('inf')
+    for degree in range(1, n+1):
+        coefficients = np.polyfit(x, y, degree)
+        fit = np.polyval(coefficients, x)
+        error = np.sum((fit - y)**2)
+        if error < best_error:
+            best_fit = fit
+            best_coefficients = coefficients
+            best_error = error
+    return best_fit, best_coefficients
 
 
 def format_complexity(complexity):
