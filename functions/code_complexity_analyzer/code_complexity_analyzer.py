@@ -10,6 +10,8 @@ import ast
 import numpy as np
 import random
 
+import scipy
+
 lambdaClient = boto3.client('lambda')
 
 safe_locals = {}
@@ -22,6 +24,7 @@ max_list_size = 100
 number_of_steps = 100
 
 max_polynomial_degree = 10
+max_exp_base = 10
 
 default_int_value = 10
 default_string_value = "Hello World"
@@ -142,20 +145,26 @@ def get_complexity_from_runtime_graph(runtime_graph):
     y_axis = points[:, 1]
 
     # Find the Polynomial that fits the data
-    best_fit, best_coefficients = find_best_polyfit(x_axis, y_axis, max_polynomial_degree)
-    # TODO: Compare best_fit from polynomial regression to best_fit from other complexity models
+    polynomial_best_fit, best_coefficients = find_best_polyfit(x_axis, y_axis, max_polynomial_degree)
+    polynomial_complexity = len(best_coefficients) - 1
 
-    complexity = len(best_coefficients) - 1
+    log_best_fit = log_squared_error(x_axis, y_axis)
+
+    nlogn_best_fit = nlogn_squared_error(x_axis, y_axis)
+
+    exp_best_fit, exp_best_base = exp_squared_error(x_axis, y_axis, max_exp_base)
+
+    factorial_squared_error = factorial_squared_error(x_axis, y_axis)
 
     # TODO: MVP+ Support non-polynomial complexity
-    return format_complexity(complexity)
+    return format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base, factorial_squared_error)
 
 
 def find_best_polyfit(x, y, n):
     best_fit = None
     best_coefficients = None
     best_error = float('inf')
-    for degree in range(1, n+1):
+    for degree in range(n+1): # Degree 0 = Constant, Degree 1 = Linear, etc.
         coefficients = np.polyfit(x, y, degree)
         fit = np.polyval(coefficients, x)
         error = np.sum((fit - y)**2)
@@ -165,18 +174,66 @@ def find_best_polyfit(x, y, n):
             best_error = error
     return best_fit, best_coefficients
 
+def log_squared_error(x, y):
+    log_x = np.log(x)
+    A = np.vstack([log_x, np.ones(len(log_x))]).T
+    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    y_fit = m*log_x + c
+    error = np.sum((y - y_fit)**2)
+    return error
 
-def format_complexity(complexity):
-    if complexity == 0:
-        return 'Constant'
-    elif complexity == 1:
-        return 'Linear'
-    elif complexity == 2:
-        return 'Quadratic'
-    elif complexity == 3:
-        return 'Cubic'
+def nlogn_squared_error(x, y):
+    nlogn = x * np.log(x)
+    A = np.vstack([nlogn, np.ones(len(nlogn))]).T
+    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    y_fit = m*nlogn + c
+    error = np.sum((y - y_fit)**2)
+    return error
+
+def exp_squared_error(x, y, max_base): # Handles exponentials of degree [2, max_exp_base]
+    best_fit = None
+    best_error = float('inf')
+    best_base = None
+    for exp_base in range(2, max_base):
+        exp_x = exp_base**x
+        A = np.vstack([exp_x, np.ones(len(exp_x))]).T
+        m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+        y_fit = m*exp_x + c
+        error = np.sum((y - y_fit)**2)
+        if error < best_error:
+            best_fit = y_fit
+            best_error = error
+            best_base = exp_base
+    return best_fit, best_base
+
+def factorial_squared_error(x, y):
+    fact_x = scipy.special.factorial(x)
+    A = np.vstack([fact_x, np.ones(len(fact_x))]).T
+    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    y_fit = m*fact_x + c
+    error = np.sum((y - y_fit)**2)
+    return error
+
+def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base, factorial_squared_error):
+    best_fit = min(polynomial_best_fit, log_best_fit, nlogn_best_fit, exp_best_fit, factorial_squared_error)
+    if polynomial_best_fit == best_fit:
+        if polynomial_complexity == 0:
+            return 'O(1)'
+        elif polynomial_complexity == 1:
+            return 'O(n)'
+        else:
+            return f'O(n^{polynomial_complexity})'
+    elif log_best_fit == best_fit:
+        return 'O(log(n))'
+    elif nlogn_best_fit == best_fit:
+        return 'O(nlog(n))'
+    elif exp_best_fit == best_fit:
+        return f'O({exp_best_base}^n)'
+    elif factorial_squared_error == best_fit:
+        return 'O(n!)'
     else:
-        return 'Exponential'
+        raise Exception('No best fit found')
+
 
 
 def publish_results(inputCode, args, complexity, complexity_graph, user_id):
