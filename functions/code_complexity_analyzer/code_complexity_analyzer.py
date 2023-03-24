@@ -1,3 +1,4 @@
+import string
 import threading
 import time
 from requests import codes
@@ -7,6 +8,7 @@ import logging
 from RestrictedPython import safe_builtins, compile_restricted_function
 import ast
 import numpy as np
+import random
 
 lambdaClient = boto3.client('lambda')
 
@@ -16,10 +18,13 @@ safe_globals = {'ast': ast, '__builtins__': safe_builtins, '_getiter_': iter}
 # TODO: Think Harder about what this should be
 max_int_size = 1000000000
 max_string_length = 1000
-number_of_steps = 10
+max_list_size = 100
+number_of_steps = 100
 
 default_int_value = 10
 default_string_value = "Hello World"
+default_list_of_ints_value = [1]
+default_list_of_strings_value = ["a"]
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -198,6 +203,10 @@ def getArgRange(variableArg):
         return [0, max_int_size]  # Vary Int Size
     elif variableArg["argType"] == "string":
         return [0, max_string_length]  # Vary Length of input String
+    elif variableArg["argType"] == "list<int>":
+        return [0, max_list_size]
+    elif variableArg["argType"] == "list<string>":
+        return [0, max_list_size]
     else:
         # TODO: Use the enumeration of argTypes in the Lambda Layer
         raise Exception("Unsupported variable arg type")
@@ -219,6 +228,10 @@ def getArgsForThisRun(args, variable_arg_value):
                 result.append(default_int_value)
             elif arg['argType'] == 'string':
                 result.append(default_string_value)
+            elif arg['argType'] == 'list<int>':
+                result.append(default_list_of_ints_value)
+            elif arg['argType'] == 'list<string>':
+                result.append(default_list_of_strings_value)
             else:
                 raise Exception("Unsupported arg type")
     return result
@@ -229,7 +242,20 @@ def getArgValue(arg_type, arg_range, step_size, step_number):
         if arg_type == "int":
             return arg_range[0] + (step_size * step_number)
         elif arg_type == "string":
-            return "a" * (arg_range[0] + (step_size * step_number))
+            res = ""
+            for _ in range(arg_range[0] + (step_size * step_number)):
+                res += random.choice(string.ascii_lowercase)
+            return res
+        elif arg_type == "list<int>":
+            res = []
+            for _ in range(arg_range[0] + (step_size * step_number)):
+                res.append(random.randint(0, max_int_size))
+            return res
+        elif arg_type == "list<string>":
+            res = []
+            for _ in range(arg_range[0] + (step_size * step_number)):
+                res.append(random.choice(string.ascii_lowercase))
+            return res
     except Exception as e:
         logger.debug(f'Failed to get arg value: {e}')
         raise e

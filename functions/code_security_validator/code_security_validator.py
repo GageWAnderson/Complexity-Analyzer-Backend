@@ -15,6 +15,8 @@ logger.setLevel(logging.DEBUG)
 
 default_int_arg_value = 0
 default_string_arg_value = ''
+default_int_list_arg_value = [1]
+default_string_list_arg_value = ['a']
 
 # TODO: Think Harder about what this should be
 input_code_timeout_seconds = 5.0
@@ -62,7 +64,7 @@ def runCompiledFunctionWithDefaultArgs(compiled_function, default_args):
         result = compiled_function(*default_args)
     except TimeoutError as e1:
         logger.error(f'Timeout running compiled function: {str(e1)}')
-        raise Exception('Timeout')
+        raise e1
     except Exception as e2:
         logger.error(f'Error running compiled function: {str(e2)}')
         raise e2
@@ -84,12 +86,15 @@ def parseArgsToCommaDelimitedList(args):
 def getDefaultArgs(args):
     result = []
     # TODO: Add an enumeration in the lambda layer of allowed argument types
-    # TODO: Add more argument types
     for arg in args:
         if arg['argType'] == 'int':
             result.append(default_int_arg_value)
         elif arg['argType'] == 'string':
             result.append(default_string_arg_value)
+        elif arg['argType'] == 'int_list':
+            result.append(default_int_list_arg_value)
+        elif arg['argType'] == 'string_list':
+            result.append(default_string_list_arg_value)
     return result
 
 

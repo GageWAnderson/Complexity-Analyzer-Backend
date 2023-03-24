@@ -16,7 +16,8 @@ number_of_arg_fields = 3
 lambdaClient = boto3.client('lambda')
 
 # TODO: Make an enumeration of allowed arg type strings in a Lambda Layer
-allowed_arg_types = ['int', 'string']
+# TODO: Inform the API caller about the allowed arg types and their formatting
+allowed_arg_types = ['int', 'string', 'list<string>', 'list<int>']
 
 
 logger = logging.getLogger()
@@ -29,9 +30,6 @@ def lambda_handler(event, context):
         user_id = event['params']['header']['user-id']
     except Exception as e:
         return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
-
-    # TODO: (MAYBE) Validate user ID against Cognito User Pools
-    validate_user_id(user_id)
 
     try:
         body_json = event['body-json']
@@ -91,12 +89,13 @@ def validate_all_arguments(json):
         response, isVariable = validate_argument(arg)
         if response:
             return response
-        if isVariable:
+        if isVariable: # Only 1 variable argument per call is allowed
             number_of_variable_args += 1
         if number_of_variable_args > max_number_of_variable_args:
             return construct_response(codes.bad_request, 'Too many variable arguments')
 
     if number_of_variable_args < min_number_of_variable_args:
+        # One arg must be variable, otherwise there's nothing to do
         return construct_response(codes.bad_request, 'Too few variable arguments')
     else:
         return None
@@ -106,7 +105,6 @@ def validate_argument(argJsonObject):
     if 'argName' not in argJsonObject or not argJsonObject['argName']:
         return construct_response(codes.bad_request, 'Missing argument name field'), False
     elif not str.isidentifier(argJsonObject['argName']):
-
         return construct_response(codes.bad_request, 'Invalid argument name'), False
     elif 'argType' not in argJsonObject:
         return construct_response(codes.bad_request, 'Missing argument type field'), False
@@ -135,8 +133,3 @@ def construct_response(status_code, body=None, error=None):
             'body': json.dumps({'message': body})
         }
     return response
-
-
-def validate_user_id(user_id):
-    # TODO: Consider calling Cognito User Pools to validate user ID
-    return True
