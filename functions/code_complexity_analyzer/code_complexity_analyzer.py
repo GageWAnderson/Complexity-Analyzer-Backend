@@ -31,7 +31,7 @@ default_list_of_ints_value = [1]
 default_list_of_strings_value = ["a"]
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 
 restricted_function_name = 'restricted_function'
 
@@ -94,20 +94,15 @@ def run_code_with_variable_input(compiled_function, args):
     for i in range(number_of_steps):
         variable_arg_value = getArgValue(
             variable_arg_type, arg_range, step_size, i)
-        logger.debug(f'variable_arg_value: {variable_arg_value}')
         args_for_this_run = getArgsForThisRun(args, variable_arg_value)
-        logger.debug(f'args_for_this_run: {args_for_this_run}')
-        logger.debug(
-            f'i: {i}, Running code with args: {args_for_this_run} (variable arg value: {variable_arg_value})')
         try:
             runtime = run_and_time_code_execution(
                 compiled_function, args_for_this_run)
             runtime_graph.append((variable_arg_value, runtime))
-            logger.debug(f'Code execution took {runtime} seconds')
         except Exception as e:
             # Some inputs may fail, don't stop the whole execution since others may succeed
             logger.debug(
-                f'Code execution failed, skipping this entry in the graph: {e}')
+                f'Failed to run code with variable input: Args: {args_for_this_run}, Exception: {str(e)}')
 
     return runtime_graph
 
@@ -203,11 +198,26 @@ def nlogn_squared_error(x, y):
 
 # Handles exponentials of degree [2, max_exp_base]
 def exp_squared_error(x, y, max_base):
+    
+    def safe_exp(base, x):
+        res = []
+        with np.errstate(over='ignore'):
+            res = np.power(base, x)
+
+        x_value_no_inf_or_nan = []
+        y_value_no_corresponding_nan_or_inf = []
+        for i in range(len(res)):
+            if not (res[i] == None or res[i] == np.inf or res[i] == -np.inf or np.isnan(res[i])):
+                x_value_no_inf_or_nan.append(x[i])
+                y_value_no_corresponding_nan_or_inf.append(y[i])
+        
+        return x_value_no_inf_or_nan, y_value_no_corresponding_nan_or_inf
+
     best_fit = None
     best_error = float('inf')
     best_base = None
     for exp_base in range(2, max_base):
-        exp_x = exp_base**x
+        exp_x, y_values_no_corresponding_inf = safe_exp(exp_base, x)
         A = np.vstack([exp_x, np.ones(len(exp_x))]).T
         m, c = np.linalg.lstsq(A, y, rcond=None)[0]
         y_fit = m*exp_x + c
