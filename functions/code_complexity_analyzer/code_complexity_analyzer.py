@@ -31,7 +31,7 @@ default_list_of_ints_value = [1]
 default_list_of_strings_value = ["a"]
 
 logger = logging.getLogger()
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 
 restricted_function_name = 'restricted_function'
 
