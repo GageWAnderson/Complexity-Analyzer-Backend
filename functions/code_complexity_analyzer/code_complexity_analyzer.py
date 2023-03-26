@@ -173,7 +173,8 @@ def find_best_polyfit(x, y, n):
     return best_fit, best_coefficients
 
 def log_squared_error(x, y):
-    log_x = np.log(x)
+    x_axis_no_zeros = [x for x in x if x != 0]
+    log_x = np.log(x_axis_no_zeros)
     A = np.vstack([log_x, np.ones(len(log_x))]).T
     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
     y_fit = m*log_x + c
@@ -181,7 +182,8 @@ def log_squared_error(x, y):
     return error
 
 def nlogn_squared_error(x, y):
-    nlogn = x * np.log(x)
+    x_axis_no_zeros = [x for x in x if x != 0]
+    nlogn = (x_axis_no_zeros) * np.log(x_axis_no_zeros)
     A = np.vstack([nlogn, np.ones(len(nlogn))]).T
     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
     y_fit = m*nlogn + c
