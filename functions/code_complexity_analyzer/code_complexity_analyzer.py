@@ -9,6 +9,7 @@ from RestrictedPython import safe_builtins, compile_restricted_function
 import ast
 import numpy as np
 import random
+import traceback
 # import scipy
 
 lambdaClient = boto3.client('lambda')
@@ -156,7 +157,7 @@ def get_complexity_from_runtime_graph(runtime_graph):
         # TODO: MVP+ Support non-polynomial complexity
         return format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit)
     except Exception as e:
-        logger.debug(f'Failed to calculate complexity from runtime graph: {e}')
+        logger.debug(f'Failed to calculate complexity from runtime graph: {traceback.format_exc()}')
         raise e
 
 
@@ -176,7 +177,7 @@ def find_best_polyfit(x, y, n):
                 best_error = error
         return best_fit, best_coefficients
     except Exception as e:
-        logger.debug(f'Failed to find best polyfit: {e}')
+        logger.debug(f'Failed to find best polyfit: {traceback.format_exc()}')
         raise e
 
 
@@ -190,7 +191,7 @@ def log_squared_error(x, y):
         error = np.sum((y_axis_no_zeros - y_fit)**2)
         return error
     except Exception as e:
-        logger.debug(f'Failed to calculate log squared error: {e}')
+        logger.debug(f'Failed to calculate log squared error: {traceback.format_exc()}')
         raise e
 
 
@@ -204,7 +205,7 @@ def nlogn_squared_error(x, y):
         error = np.sum((y_axis_no_zeros - y_fit)**2)
         return error
     except Exception as e:
-        logger.debug(f'Failed to calculate nlogn squared error: {e}')
+        logger.debug(f'Failed to calculate nlogn squared error: {traceback.format_exc()}')
         raise e
 
 
@@ -284,7 +285,7 @@ def publish_results(inputCode, args, complexity, complexity_graph, user_id):
             })
         )
     except Exception as e:
-        logger.debug(f'Failed to publish results: {e}')
+        logger.debug(f'Failed to publish results: {traceback.format_exc()}')
         raise e
 
 
@@ -369,7 +370,7 @@ def getArgValue(arg_type, arg_range, step_size, step_number):
                 res.append(random.choice(string.ascii_lowercase))
             return res
     except Exception as e:
-        logger.debug(f'Failed to get arg value: {e}')
+        logger.debug(f'Failed to get arg value: {traceback.format_exc()}')
         raise e
 
 
