@@ -37,7 +37,7 @@ restricted_function_name = 'restricted_function'
 
 # Defines the timeout for 1 run of the input code
 # input_code_timeout_seconds * number_of_steps < function timeout
-input_code_timeout_seconds = 60 * 10 # Lambda handles overall timeout
+input_code_timeout_seconds = 60 * 10  # Lambda handles overall timeout
 
 
 def lambda_handler(event, context):
@@ -137,32 +137,40 @@ def run_and_time_code_execution(compiled_function, args):
 
 
 def get_complexity_from_runtime_graph(runtime_graph):
-    logger.debug(f'Calculating complexity from runtime graph: {runtime_graph}')
-    points = np.array(runtime_graph)
-    x_axis = points[:, 0]
-    y_axis = points[:, 1]
+    try:
 
-    # Find the Polynomial that fits the data
-    polynomial_best_fit, best_coefficients = find_best_polyfit(x_axis, y_axis, max_polynomial_degree)
-    polynomial_complexity = len(best_coefficients) - 1
+        logger.debug(
+            f'Calculating complexity from runtime graph: {runtime_graph}')
+        points = np.array(runtime_graph)
+        x_axis = points[:, 0]
+        y_axis = points[:, 1]
 
-    log_best_fit = log_squared_error(x_axis, y_axis)
+        # Find the Polynomial that fits the data
+        polynomial_best_fit, best_coefficients = find_best_polyfit(
+            x_axis, y_axis, max_polynomial_degree)
+        polynomial_complexity = len(best_coefficients) - 1
 
-    nlogn_best_fit = nlogn_squared_error(x_axis, y_axis)
+        log_best_fit = log_squared_error(x_axis, y_axis)
 
-    exp_best_fit, exp_best_base = exp_squared_error(x_axis, y_axis, max_exp_base)
+        nlogn_best_fit = nlogn_squared_error(x_axis, y_axis)
 
-    # factorial_squared_error = factorial_squared_error(x_axis, y_axis)
+        exp_best_fit, exp_best_base = exp_squared_error(
+            x_axis, y_axis, max_exp_base)
 
-    # TODO: MVP+ Support non-polynomial complexity
-    return format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base)
+        # factorial_squared_error = factorial_squared_error(x_axis, y_axis)
+
+        # TODO: MVP+ Support non-polynomial complexity
+        return format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base)
+    except Exception as e:
+        logger.debug(f'Failed to calculate complexity from runtime graph: {e}')
+        raise e
 
 
 def find_best_polyfit(x, y, n):
     best_fit = None
     best_coefficients = None
     best_error = float('inf')
-    for degree in range(n+1): # Degree 0 = Constant, Degree 1 = Linear, etc.
+    for degree in range(n+1):  # Degree 0 = Constant, Degree 1 = Linear, etc.
         coefficients = np.polyfit(x, y, degree)
         fit = np.polyval(coefficients, x)
         error = np.sum((fit - y)**2)
@@ -171,6 +179,7 @@ def find_best_polyfit(x, y, n):
             best_coefficients = coefficients
             best_error = error
     return best_fit, best_coefficients
+
 
 def log_squared_error(x, y):
     x_axis_no_zeros = [x for x in x if x != 0]
@@ -181,6 +190,7 @@ def log_squared_error(x, y):
     error = np.sum((y - y_fit)**2)
     return error
 
+
 def nlogn_squared_error(x, y):
     x_axis_no_zeros = [x for x in x if x != 0]
     nlogn = (x_axis_no_zeros) * np.log(x_axis_no_zeros)
@@ -190,7 +200,9 @@ def nlogn_squared_error(x, y):
     error = np.sum((y - y_fit)**2)
     return error
 
-def exp_squared_error(x, y, max_base): # Handles exponentials of degree [2, max_exp_base]
+
+# Handles exponentials of degree [2, max_exp_base]
+def exp_squared_error(x, y, max_base):
     best_fit = None
     best_error = float('inf')
     best_base = None
@@ -215,8 +227,10 @@ def exp_squared_error(x, y, max_base): # Handles exponentials of degree [2, max_
 #     error = np.sum((y - y_fit)**2)
 #     return error
 
+
 def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base):
-    best_fit = min(polynomial_best_fit, log_best_fit, nlogn_best_fit, exp_best_fit)
+    best_fit = min(polynomial_best_fit, log_best_fit,
+                   nlogn_best_fit, exp_best_fit)
     if polynomial_best_fit == best_fit:
         if polynomial_complexity == 0:
             return 'O(1)'
@@ -232,7 +246,6 @@ def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, 
         return f'O({exp_best_base}^n)'
     else:
         raise Exception('No best fit found')
-
 
 
 def publish_results(inputCode, args, complexity, complexity_graph, user_id):
