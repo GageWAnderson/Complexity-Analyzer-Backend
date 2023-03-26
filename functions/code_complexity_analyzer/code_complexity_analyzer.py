@@ -217,11 +217,11 @@ def exp_squared_error(x, y, max_base):
     best_error = float('inf')
     best_base = None
     for exp_base in range(2, max_base):
-        exp_x, y_values_no_corresponding_inf = safe_exp(exp_base, x)
-        A = np.vstack([exp_x, np.ones(len(exp_x))]).T
-        m, c = np.linalg.lstsq(A, y, rcond=None)[0]
-        y_fit = m*exp_x + c
-        error = np.sum((y - y_fit)**2)
+        exp_x_no_inf, y_values_no_corresponding_inf = safe_exp(exp_base, x)
+        A = np.vstack([exp_x_no_inf, np.ones(len(exp_x_no_inf))]).T
+        m, c = np.linalg.lstsq(A, y_values_no_corresponding_inf, rcond=None)[0]
+        y_fit = m*exp_x_no_inf + c
+        error = np.sum((y_values_no_corresponding_inf - y_fit)**2)
         if error < best_error:
             best_fit = y_fit
             best_error = error
