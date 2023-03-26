@@ -182,22 +182,22 @@ def find_best_polyfit(x, y, n):
 
 
 def log_squared_error(x, y):
-    x_axis_no_zeros = [x for x in x if x != 0]
+    x_axis_no_zeros, y_axis_no_zeros = remove_zero_points_x_y(x, y)
     log_x = np.log(x_axis_no_zeros)
     A = np.vstack([log_x, np.ones(len(log_x))]).T
-    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
     y_fit = m*log_x + c
-    error = np.sum((y - y_fit)**2)
+    error = np.sum((y_axis_no_zeros - y_fit)**2)
     return error
 
 
 def nlogn_squared_error(x, y):
-    x_axis_no_zeros = [x for x in x if x != 0]
+    x_axis_no_zeros, y_axis_no_zeros = remove_zero_points_x_y(x, y)
     nlogn = (x_axis_no_zeros) * np.log(x_axis_no_zeros)
     A = np.vstack([nlogn, np.ones(len(nlogn))]).T
-    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
     y_fit = m*nlogn + c
-    error = np.sum((y - y_fit)**2)
+    error = np.sum((y_axis_no_zeros - y_fit)**2)
     return error
 
 
@@ -355,3 +355,13 @@ def getVariableArg(args):
         if arg['variable']:
             return arg, arg['argType']
     raise Exception("No variable arg found")
+
+
+def remove_zero_points_x_y(x, y):
+    x_result = []
+    y_result = []
+    for i in range(len(x)):
+        if x[i] != 0:
+            x_result.append(x[i])
+            y_result.append(y[i])
+    return x_result, y_result
