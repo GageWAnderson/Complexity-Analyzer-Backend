@@ -9,8 +9,7 @@ from RestrictedPython import safe_builtins, compile_restricted_function
 import ast
 import numpy as np
 import random
-
-import scipy
+# import scipy
 
 lambdaClient = boto3.client('lambda')
 
@@ -153,10 +152,10 @@ def get_complexity_from_runtime_graph(runtime_graph):
 
     exp_best_fit, exp_best_base = exp_squared_error(x_axis, y_axis, max_exp_base)
 
-    factorial_squared_error = factorial_squared_error(x_axis, y_axis)
+    # factorial_squared_error = factorial_squared_error(x_axis, y_axis)
 
     # TODO: MVP+ Support non-polynomial complexity
-    return format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base, factorial_squared_error)
+    return format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base)
 
 
 def find_best_polyfit(x, y, n):
@@ -205,16 +204,17 @@ def exp_squared_error(x, y, max_base): # Handles exponentials of degree [2, max_
             best_base = exp_base
     return best_fit, best_base
 
-def factorial_squared_error(x, y):
-    fact_x = scipy.special.factorial(x)
-    A = np.vstack([fact_x, np.ones(len(fact_x))]).T
-    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
-    y_fit = m*fact_x + c
-    error = np.sum((y - y_fit)**2)
-    return error
+# TODO: Uncomment this when we add scipy to a lambda layer
+# def factorial_squared_error(x, y):
+#     fact_x = scipy.special.factorial(x)
+#     A = np.vstack([fact_x, np.ones(len(fact_x))]).T
+#     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+#     y_fit = m*fact_x + c
+#     error = np.sum((y - y_fit)**2)
+#     return error
 
-def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base, factorial_squared_error):
-    best_fit = min(polynomial_best_fit, log_best_fit, nlogn_best_fit, exp_best_fit, factorial_squared_error)
+def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base):
+    best_fit = min(polynomial_best_fit, log_best_fit, nlogn_best_fit, exp_best_fit)
     if polynomial_best_fit == best_fit:
         if polynomial_complexity == 0:
             return 'O(1)'
@@ -228,8 +228,6 @@ def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, 
         return 'O(nlog(n))'
     elif exp_best_fit == best_fit:
         return f'O({exp_best_base}^n)'
-    elif factorial_squared_error == best_fit:
-        return 'O(n!)'
     else:
         raise Exception('No best fit found')
 
