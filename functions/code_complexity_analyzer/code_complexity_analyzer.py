@@ -116,7 +116,6 @@ def run_and_time_code_execution(compiled_function, args):
 
     try:
         start_time = time.time()
-        logger.debug(f'Running code with args: {args}')
         compiled_function(*args)
     except TimeoutError as e1:
         logger.debug('Code execution timed out')
@@ -149,84 +148,97 @@ def get_complexity_from_runtime_graph(runtime_graph):
 
         nlogn_best_fit = nlogn_squared_error(x_axis, y_axis)
 
-        exp_best_fit, exp_best_base = exp_squared_error(
-            x_axis, y_axis, max_exp_base)
+        # exp_best_fit, exp_best_base = exp_squared_error(
+        #     x_axis, y_axis, max_exp_base)
 
         # factorial_squared_error = factorial_squared_error(x_axis, y_axis)
 
         # TODO: MVP+ Support non-polynomial complexity
-        return format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base)
+        return format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit)
     except Exception as e:
         logger.debug(f'Failed to calculate complexity from runtime graph: {e}')
         raise e
 
 
 def find_best_polyfit(x, y, n):
-    best_fit = None
-    best_coefficients = None
-    best_error = float('inf')
-    for degree in range(n+1):  # Degree 0 = Constant, Degree 1 = Linear, etc.
-        coefficients = np.polyfit(x, y, degree)
-        fit = np.polyval(coefficients, x)
-        error = np.sum((fit - y)**2)
-        if error < best_error:
-            best_fit = fit
-            best_coefficients = coefficients
-            best_error = error
-    return best_fit, best_coefficients
+    try:
+        best_fit = None
+        best_coefficients = None
+        best_error = float('inf')
+        # Degree 0 = Constant, Degree 1 = Linear, etc.
+        for degree in range(n+1):
+            coefficients = np.polyfit(x, y, degree)
+            fit = np.polyval(coefficients, x)
+            error = np.sum((fit - y)**2)
+            if error < best_error:
+                best_fit = fit
+                best_coefficients = coefficients
+                best_error = error
+        return best_fit, best_coefficients
+    except Exception as e:
+        logger.debug(f'Failed to find best polyfit: {e}')
+        raise e
 
 
 def log_squared_error(x, y):
-    x_axis_no_zeros, y_axis_no_zeros = remove_zero_points_x_y(x, y)
-    log_x = np.log(x_axis_no_zeros)
-    A = np.vstack([log_x, np.ones(len(log_x))]).T
-    m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
-    y_fit = m*log_x + c
-    error = np.sum((y_axis_no_zeros - y_fit)**2)
-    return error
+    try:
+        x_axis_no_zeros, y_axis_no_zeros = remove_zero_points_x_y(x, y)
+        log_x = np.log(x_axis_no_zeros)
+        A = np.vstack([log_x, np.ones(len(log_x))]).T
+        m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
+        y_fit = m*log_x + c
+        error = np.sum((y_axis_no_zeros - y_fit)**2)
+        return error
+    except Exception as e:
+        logger.debug(f'Failed to calculate log squared error: {e}')
+        raise e
 
 
 def nlogn_squared_error(x, y):
-    x_axis_no_zeros, y_axis_no_zeros = remove_zero_points_x_y(x, y)
-    nlogn = (x_axis_no_zeros) * np.log(x_axis_no_zeros)
-    A = np.vstack([nlogn, np.ones(len(nlogn))]).T
-    m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
-    y_fit = m*nlogn + c
-    error = np.sum((y_axis_no_zeros - y_fit)**2)
-    return error
+    try:
+        x_axis_no_zeros, y_axis_no_zeros = remove_zero_points_x_y(x, y)
+        nlogn = (x_axis_no_zeros) * np.log(x_axis_no_zeros)
+        A = np.vstack([nlogn, np.ones(len(nlogn))]).T
+        m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
+        y_fit = m*nlogn + c
+        error = np.sum((y_axis_no_zeros - y_fit)**2)
+        return error
+    except Exception as e:
+        logger.debug(f'Failed to calculate nlogn squared error: {e}')
+        raise e
 
 
 # Handles exponentials of degree [2, max_exp_base]
-def exp_squared_error(x, y, max_base):
-    
-    def safe_exp(base, x):
-        res = []
-        with np.errstate(over='ignore'):
-            res = np.power(base, x)
+# def exp_squared_error(x, y, max_base):
 
-        x_value_no_inf_or_nan = []
-        y_value_no_corresponding_nan_or_inf = []
-        for i in range(len(res)):
-            if not (res[i] == None or res[i] == np.inf or res[i] == -np.inf or np.isnan(res[i])):
-                x_value_no_inf_or_nan.append(x[i])
-                y_value_no_corresponding_nan_or_inf.append(y[i])
-        
-        return x_value_no_inf_or_nan, y_value_no_corresponding_nan_or_inf
+#     def safe_exp(base, x):
+#         res = []
+#         with np.errstate(over='ignore'):
+#             res = np.power(base, x)
 
-    best_fit = None
-    best_error = float('inf')
-    best_base = None
-    for exp_base in range(2, max_base):
-        exp_x_no_inf, y_values_no_corresponding_inf = safe_exp(exp_base, x)
-        A = np.vstack([exp_x_no_inf, np.ones(len(exp_x_no_inf))]).T
-        m, c = np.linalg.lstsq(A, y_values_no_corresponding_inf, rcond=None)[0]
-        y_fit = m*exp_x_no_inf + c
-        error = np.sum((y_values_no_corresponding_inf - y_fit)**2)
-        if error < best_error:
-            best_fit = y_fit
-            best_error = error
-            best_base = exp_base
-    return best_fit, best_base
+#         x_value_no_inf_or_nan = []
+#         y_value_no_corresponding_nan_or_inf = []
+#         for i in range(len(res)):
+#             if not (res[i] == None or res[i] == np.inf or res[i] == -np.inf or np.isnan(res[i])):
+#                 x_value_no_inf_or_nan.append(x[i])
+#                 y_value_no_corresponding_nan_or_inf.append(y[i])
+
+#         return x_value_no_inf_or_nan, y_value_no_corresponding_nan_or_inf
+
+#     best_fit = None
+#     best_error = float('inf')
+#     best_base = None
+#     for exp_base in range(2, max_base):
+#         exp_x_no_inf, y_values_no_corresponding_inf = safe_exp(exp_base, x)
+#         A = np.vstack([exp_x_no_inf, np.ones(len(exp_x_no_inf))]).T
+#         m, c = np.linalg.lstsq(A, y_values_no_corresponding_inf, rcond=None)[0]
+#         y_fit = m*exp_x_no_inf + c
+#         error = np.sum((y_values_no_corresponding_inf - y_fit)**2)
+#         if error < best_error:
+#             best_fit = y_fit
+#             best_error = error
+#             best_base = exp_base
+#     return best_fit, best_base
 
 # TODO: Uncomment this when we add scipy to a lambda layer
 # def factorial_squared_error(x, y):
@@ -238,9 +250,9 @@ def exp_squared_error(x, y, max_base):
 #     return error
 
 
-def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit, exp_best_fit, exp_best_base):
+def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit):
     best_fit = min(polynomial_best_fit, log_best_fit,
-                   nlogn_best_fit, exp_best_fit)
+                   nlogn_best_fit)
     if polynomial_best_fit == best_fit:
         if polynomial_complexity == 0:
             return 'O(1)'
@@ -252,26 +264,28 @@ def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, 
         return 'O(log(n))'
     elif nlogn_best_fit == best_fit:
         return 'O(nlog(n))'
-    elif exp_best_fit == best_fit:
-        return f'O({exp_best_base}^n)'
     else:
         raise Exception('No best fit found')
 
 
 def publish_results(inputCode, args, complexity, complexity_graph, user_id):
-    logger.debug(
-        f'Publishing results to post_complexity_analyzer_results (user_id: {user_id}')
-    lambdaClient.invoke(
-        FunctionName='post_complexity_analyzer_results',
-        InvocationType='Event',
-        Payload=json.dumps({
-            'inputCode': inputCode,
-            'args': args,
-            'complexity': complexity,
-            'complexity-graph': complexity_graph,
-            'user-id': user_id
-        })
-    )
+    try:
+        logger.debug(
+            f'Publishing results to post_complexity_analyzer_results (user_id: {user_id}')
+        lambdaClient.invoke(
+            FunctionName='post_complexity_analyzer_results',
+            InvocationType='Event',
+            Payload=json.dumps({
+                'inputCode': inputCode,
+                'args': args,
+                'complexity': complexity,
+                'complexity-graph': complexity_graph,
+                'user-id': user_id
+            })
+        )
+    except Exception as e:
+        logger.debug(f'Failed to publish results: {e}')
+        raise e
 
 
 def parseArgsToCommaDelimitedList(args):
@@ -318,7 +332,6 @@ def getStepSize(arg_range):
 def getArgsForThisRun(args, variable_arg_value):
     result = []
     for arg in args:
-        logger.debug(f'arg: {arg}')
         if arg['variable']:
             result.append(variable_arg_value)
         else:
