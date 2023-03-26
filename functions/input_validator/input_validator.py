@@ -13,6 +13,8 @@ max_number_of_variable_args = 1
 
 number_of_arg_fields = 3
 
+MAX_INPUT_SIZE_LIMIT = 10000
+
 lambdaClient = boto3.client('lambda')
 
 # TODO: Make an enumeration of allowed arg type strings in a Lambda Layer
@@ -44,6 +46,10 @@ def lambda_handler(event, context):
         return construct_response(codes.bad_request, 'Missing arguments field')
     elif 'args' in body_json and len(body_json['args']) > max_args_number or len(body_json['args']) < min_args_number:
         return construct_response(codes.bad_request, 'Invalid argument number')
+    elif 'maxInputSize' not in body_json:
+        return construct_response(codes.bad_request, 'Missing max input size field')
+    elif not isValidMaxInputSize(body_json['maxInputSize']):
+        return construct_response(codes.bad_request, 'Invalid max input size')
     else:
         response = validate_all_arguments(body_json)
         if response:
@@ -54,7 +60,7 @@ def lambda_handler(event, context):
         try:
             logger.debug('Calling complexity analyzer...')
             call_complexity_analyzer(
-                body_json['inputCode'], body_json['args'], user_id)
+                body_json['inputCode'], body_json['args'], body_json['maxInputSize'], user_id)
             return construct_response(codes.ok, 'Input code passed security check')
         except Exception as e:
             return construct_response(codes.bad_request, 'Failed to call complexity analyzer', str(e))
@@ -74,12 +80,12 @@ def validate_code_security(code, args):
     return json.loads(response)['statusCode'] == codes.ok
 
 
-def call_complexity_analyzer(code, args, user_id):
+def call_complexity_analyzer(code, args, maxInputSize, user_id):
     lambdaClient.invoke(
         FunctionName='code_complexity_analyzer',
         InvocationType='Event',
         Payload=json.dumps(
-            {'inputCode': code, 'args': args, 'user-id': user_id})
+            {'inputCode': code, 'args': args, 'maxInputSize': maxInputSize, 'user-id': user_id})
     )
 
 
@@ -89,7 +95,7 @@ def validate_all_arguments(json):
         response, isVariable = validate_argument(arg)
         if response:
             return response
-        if isVariable: # Only 1 variable argument per call is allowed
+        if isVariable:  # Only 1 variable argument per call is allowed
             number_of_variable_args += 1
         if number_of_variable_args > max_number_of_variable_args:
             return construct_response(codes.bad_request, 'Too many variable arguments')
@@ -119,6 +125,10 @@ def validate_argument(argJsonObject):
             return None, True
         else:
             return None, False
+
+
+def isValidMaxInputSize(maxInputSize):
+    return isinstance(maxInputSize, int) and maxInputSize > 0 and maxInputSize <= MAX_INPUT_SIZE_LIMIT
 
 
 def construct_response(status_code, body=None, error=None):

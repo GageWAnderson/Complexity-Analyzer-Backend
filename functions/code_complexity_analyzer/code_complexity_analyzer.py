@@ -19,8 +19,8 @@ safe_globals = {'ast': ast, '__builtins__': safe_builtins, '_getiter_': iter}
 
 # TODO: Think Harder about what this should be
 max_int_size = 10000
-max_string_length = 10000
-max_list_size = 100
+default_max_input_size = 1000
+
 number_of_steps = 100
 
 max_polynomial_degree = 10
@@ -45,13 +45,15 @@ def lambda_handler(event, context):
     try:
         input_function_body = event['inputCode']
         args = event['args']
+        maxInputSize = event['maxInputSize']
         user_id = event['user-id']
 
         compiled_function = compile_input_function_restricted(
             input_function_body, parseArgsToCommaDelimitedList(args))
 
         logger.debug(f'Running code with variable input: {args}')
-        runtime_graph = run_code_with_variable_input(compiled_function, args)
+        runtime_graph = run_code_with_variable_input(
+            compiled_function, args, maxInputSize=default_max_input_size)
 
         logger.debug(f'runtime_graph: {runtime_graph}')
 
@@ -85,10 +87,10 @@ def compile_input_function_restricted(input_function_body, args):
         raise e
 
 
-def run_code_with_variable_input(compiled_function, args):
+def run_code_with_variable_input(compiled_function, args, maxInputSize):
     runtime_graph = []
     variable_arg, variable_arg_type = getVariableArg(args)
-    arg_range = getArgRange(variable_arg)
+    arg_range = [0, maxInputSize]
     step_size = getStepSize(arg_range)
 
     logger.debug(f'arg_range: {arg_range}, step_size: {step_size}')
@@ -174,7 +176,8 @@ def find_best_polyfit(x, y, n):
             if error < best_error:
                 best_coefficients = coefficients
                 best_error = error
-        logger.debug(f'Best error: {best_error}, Best coefficients: {best_coefficients}')
+        logger.debug(
+            f'Best error: {best_error}, Best coefficients: {best_coefficients}')
         return best_error, best_coefficients
     except Exception as e:
         logger.debug(f'Failed to find best polyfit: {traceback.format_exc()}')
@@ -313,20 +316,6 @@ def construct_response(status_code, body=None, error=None):
             'body': json.dumps({'message': body})
         }
     return response
-
-
-def getArgRange(variableArg):
-    if variableArg["argType"] == "int":
-        return [0, max_int_size]  # Vary Int Size
-    elif variableArg["argType"] == "string":
-        return [0, max_string_length]  # Vary Length of input String
-    elif variableArg["argType"] == "list<int>":
-        return [0, max_list_size]
-    elif variableArg["argType"] == "list<string>":
-        return [0, max_list_size]
-    else:
-        # TODO: Use the enumeration of argTypes in the Lambda Layer
-        raise Exception("Unsupported variable arg type")
 
 
 def getStepSize(arg_range):
