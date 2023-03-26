@@ -141,13 +141,13 @@ def get_complexity_from_runtime_graph(runtime_graph):
         y_axis = points[:, 1]
 
         # Find the Polynomial that fits the data
-        polynomial_best_fit, best_coefficients = find_best_polyfit(
+        polynomial_best_error, best_coefficients = find_best_polyfit(
             x_axis, y_axis, max_polynomial_degree)
         polynomial_complexity = len(best_coefficients) - 1
 
-        log_best_fit = log_squared_error(x_axis, y_axis)
+        log_best_error = log_squared_error(x_axis, y_axis)
 
-        nlogn_best_fit = nlogn_squared_error(x_axis, y_axis)
+        nlogn_best_error = nlogn_squared_error(x_axis, y_axis)
 
         # exp_best_fit, exp_best_base = exp_squared_error(
         #     x_axis, y_axis, max_exp_base)
@@ -155,15 +155,15 @@ def get_complexity_from_runtime_graph(runtime_graph):
         # factorial_squared_error = factorial_squared_error(x_axis, y_axis)
 
         # TODO: MVP+ Support non-polynomial complexity
-        return format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit)
+        return format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error)
     except Exception as e:
-        logger.debug(f'Failed to calculate complexity from runtime graph: {traceback.format_exc()}')
+        logger.debug(
+            f'Failed to calculate complexity from runtime graph: {traceback.format_exc()}')
         raise e
 
 
 def find_best_polyfit(x, y, n):
     try:
-        best_fit = None
         best_coefficients = None
         best_error = float('inf')
         # Degree 0 = Constant, Degree 1 = Linear, etc.
@@ -172,10 +172,10 @@ def find_best_polyfit(x, y, n):
             fit = np.polyval(coefficients, x)
             error = np.sum((fit - y)**2)
             if error < best_error:
-                best_fit = fit
                 best_coefficients = coefficients
                 best_error = error
-        return best_fit, best_coefficients
+        logger.debug(f'Best error: {best_error}, Best coefficients: {best_coefficients}')
+        return best_error, best_coefficients
     except Exception as e:
         logger.debug(f'Failed to find best polyfit: {traceback.format_exc()}')
         raise e
@@ -189,9 +189,11 @@ def log_squared_error(x, y):
         m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
         y_fit = m*log_x + c
         error = np.sum((y_axis_no_zeros - y_fit)**2)
+        logger.debug(f'Log squared error: {error}')
         return error
     except Exception as e:
-        logger.debug(f'Failed to calculate log squared error: {traceback.format_exc()}')
+        logger.debug(
+            f'Failed to calculate log squared error: {traceback.format_exc()}')
         raise e
 
 
@@ -203,9 +205,11 @@ def nlogn_squared_error(x, y):
         m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
         y_fit = m*nlogn + c
         error = np.sum((y_axis_no_zeros - y_fit)**2)
+        logger.debug(f'NlogN squared error: {error}')
         return error
     except Exception as e:
-        logger.debug(f'Failed to calculate nlogn squared error: {traceback.format_exc()}')
+        logger.debug(
+            f'Failed to calculate nlogn squared error: {traceback.format_exc()}')
         raise e
 
 
@@ -252,8 +256,7 @@ def nlogn_squared_error(x, y):
 
 
 def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit):
-    best_fit = min(polynomial_best_fit, log_best_fit,
-                   nlogn_best_fit)
+    best_fit = min(polynomial_best_fit, log_best_fit, nlogn_best_fit)
     if polynomial_best_fit == best_fit:
         if polynomial_complexity == 0:
             return 'O(1)'
