@@ -18,8 +18,8 @@ safe_locals = {}
 safe_globals = {'ast': ast, '__builtins__': safe_builtins, '_getiter_': iter}
 
 # TODO: Think Harder about what this should be
-max_int_size = 1000
-max_string_length = 1000
+max_int_size = 10000
+max_string_length = 10000
 max_list_size = 100
 number_of_steps = 100
 
@@ -38,7 +38,7 @@ restricted_function_name = 'restricted_function'
 
 # Defines the timeout for 1 run of the input code
 # input_code_timeout_seconds * number_of_steps < function timeout
-input_code_timeout_seconds = 5
+input_code_timeout_seconds = 60 * 10 # Lambda handles overall timeout
 
 
 def lambda_handler(event, context):
@@ -89,7 +89,6 @@ def run_code_with_variable_input(compiled_function, args):
     runtime_graph = []
     variable_arg, variable_arg_type = getVariableArg(args)
     arg_range = getArgRange(variable_arg)
-    # TODO: How many steps can I do before timeout?
     step_size = getStepSize(arg_range)
 
     logger.debug(f'arg_range: {arg_range}, step_size: {step_size}')
