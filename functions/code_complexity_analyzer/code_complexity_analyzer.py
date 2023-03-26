@@ -23,8 +23,8 @@ default_max_input_size = 1000
 
 number_of_steps = 100
 
-max_polynomial_degree = 10
-max_exp_base = 10
+max_polynomial_degree = 3
+max_exp_base = 3
 
 default_int_value = 10
 default_string_value = "Hello World"

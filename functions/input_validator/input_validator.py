@@ -13,7 +13,7 @@ max_number_of_variable_args = 1
 
 number_of_arg_fields = 3
 
-MAX_INPUT_SIZE_LIMIT = 10000
+MAX_INPUT_SIZE_LIMIT = 1000000
 
 lambdaClient = boto3.client('lambda')
 
