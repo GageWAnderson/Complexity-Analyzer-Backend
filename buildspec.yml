@@ -16,12 +16,18 @@ phases:
   build:
     commands:
       - echo "Zipping deployment package"
-      - zip -r9 input_validator_deployment_package.zip functions/input_validator/input_validator.py
-      - zip -r9 get_results_deployment_package.zip functions/get_results_info/get_results_info.py
-      - zip -r9 code_security_validator_deployment_package.zip functions/code_security_validator/code_security_validator.py
-      - zip -r9 code_complexity_analyzer_deployment_package.zip functions/code_complexity_analyzer/code_complexity_analyzer.py
-      - zip -r9 post_complexity_analyzer_results_deployment_package.zip functions/post_complexity_analyzer_results/post_complexity_analyzer_results.py
-      - zip -r9 get_result_graph_deployment_package.zip functions/get_result_graph/get_result_graph.py
+      - cd functions/input_validator
+      - zip -r9 ../../input_validator_deployment_package.zip input_validator.py
+      - cd ../get_results_info
+      - zip -r9 ../../get_results_deployment_package.zip get_results_info.py
+      - cd ../code_security_validator
+      - zip -r9 ../../code_security_validator_deployment_package.zip code_security_validator.py
+      - cd ../code_complexity_analyzer
+      - zip -r9 ../../code_complexity_analyzer_deployment_package.zip code_complexity_analyzer.py
+      - cd ../post_complexity_analyzer_results
+      - zip -r9 ../../post_complexity_analyzer_results_deployment_package.zip post_complexity_analyzer_results.py
+      - cd ../get_result_graph
+      - zip -r9 ../../get_result_graph_deployment_package.zip get_result_graph.py
       - echo "Done"
 
   post_build:
