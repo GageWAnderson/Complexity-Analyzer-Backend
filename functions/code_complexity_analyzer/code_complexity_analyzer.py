@@ -215,43 +215,43 @@ def nlogn_squared_error(x, y):
         raise e
 
 
-def exp_squared_error(x, y, max_base):
+# def exp_squared_error(x, y, max_base):
 
-    def safe_exp(base, x):
-        res = []
-        with np.errstate(over='ignore'):
-            res = np.power(base, x)
+#     def safe_exp(base, x):
+#         res = []
+#         with np.errstate(over='ignore'):
+#             res = np.power(base, x)
 
-        x_value_no_inf_or_nan = []
-        y_value_no_corresponding_nan_or_inf = []
-        for i in range(len(res)):
-            if not (res[i] == None or res[i] == np.inf or res[i] == -np.inf or np.isnan(res[i])):
-                x_value_no_inf_or_nan.append(x[i])
-                y_value_no_corresponding_nan_or_inf.append(y[i])
+#         x_value_no_inf_or_nan = []
+#         y_value_no_corresponding_nan_or_inf = []
+#         for i in range(len(res)):
+#             if not (res[i] == None or res[i] == np.inf or res[i] == -np.inf or np.isnan(res[i])):
+#                 x_value_no_inf_or_nan.append(x[i])
+#                 y_value_no_corresponding_nan_or_inf.append(y[i])
 
-        return x_value_no_inf_or_nan, y_value_no_corresponding_nan_or_inf
+#         return x_value_no_inf_or_nan, y_value_no_corresponding_nan_or_inf
 
-    best_error = float('inf')
-    best_base = None
-    for exp_base in range(2, max_base):
-        exp_x_no_inf, y_values_no_corresponding_inf = safe_exp(exp_base, x)
-        A = np.vstack([exp_x_no_inf, np.ones(len(exp_x_no_inf))]).T
-        m, c = np.linalg.lstsq(A, y_values_no_corresponding_inf, rcond=None)[0]
-        y_fit = m*exp_x_no_inf + c
-        error = np.sum((y_values_no_corresponding_inf - y_fit)**2)
-        if error < best_error:
-            best_error = error
-            best_base = exp_base
-    return best_error, best_base
+#     best_error = float('inf')
+#     best_base = None
+#     for exp_base in range(2, max_base):
+#         exp_x_no_inf, y_values_no_corresponding_inf = safe_exp(exp_base, x)
+#         A = np.vstack([exp_x_no_inf, np.ones(len(exp_x_no_inf))]).T
+#         m, c = np.linalg.lstsq(A, y_values_no_corresponding_inf, rcond=None)[0]
+#         y_fit = m*exp_x_no_inf + c
+#         error = np.sum((y_values_no_corresponding_inf - y_fit)**2)
+#         if error < best_error:
+#             best_error = error
+#             best_base = exp_base
+#     return best_error, best_base
 
 
-def factorial_squared_error(x, y):
-    fact_x = np.factorial(x)
-    A = np.vstack([fact_x, np.ones(len(fact_x))]).T
-    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
-    y_fit = m*fact_x + c
-    error = np.sum((y - y_fit)**2)
-    return error
+# def factorial_squared_error(x, y):
+#     fact_x = np.factorial(x)
+#     A = np.vstack([fact_x, np.ones(len(fact_x))]).T
+#     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+#     y_fit = m*fact_x + c
+#     error = np.sum((y - y_fit)**2)
+#     return error
 
 
 def format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, exp_base, factorial_best_error):
