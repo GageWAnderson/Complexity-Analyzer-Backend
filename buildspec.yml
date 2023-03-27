@@ -23,6 +23,7 @@ phases:
       - zip -r9 ../code_complexity_analyzer_deployment_package.zip code_complexity_analyzer
       - zip -r9 ../post_complexity_analyzer_results_deployment_package.zip post_complexity_analyzer_results
       - zip -r9 ../get_result_graph_deployment_package.zip get_result_graph
+      - cd ..
       - echo "Done"
 
   post_build:
