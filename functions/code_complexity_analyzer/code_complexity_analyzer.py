@@ -245,13 +245,13 @@ def nlogn_squared_error(x, y):
 #     return best_error, best_base
 
 
-# def factorial_squared_error(x, y):
-#     fact_x = np.factorial(x)
-#     A = np.vstack([fact_x, np.ones(len(fact_x))]).T
-#     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
-#     y_fit = m*fact_x + c
-#     error = np.sum((y - y_fit)**2)
-#     return error
+def factorial_squared_error(x, y):
+    fact_x = np.factorial(x)
+    A = np.vstack([fact_x, np.ones(len(fact_x))]).T
+    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    y_fit = m*fact_x + c
+    error = np.sum((y - y_fit)**2)
+    return error
 
 
 def format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, exp_base, factorial_best_error):
