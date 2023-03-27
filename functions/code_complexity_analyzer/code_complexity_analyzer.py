@@ -23,7 +23,6 @@ default_max_input_size = 1000
 number_of_steps = 100
 
 max_polynomial_degree = 3
-max_exp_base = 3
 
 default_int_value = 10
 default_string_value = "Hello World"
@@ -151,7 +150,7 @@ def get_complexity_from_runtime_graph(runtime_graph):
         nlogn_best_error = nlogn_squared_error(x_axis, y_axis)
 
         exp_best_error, exp_best_base = exp_squared_error(
-            x_axis, y_axis, max_exp_base)
+            x_axis, y_axis)
 
         factorial_squared_error = factorial_squared_error(x_axis, y_axis)
 
@@ -215,34 +214,12 @@ def nlogn_squared_error(x, y):
         raise e
 
 
-def exp_squared_error(x, y, max_base):
+def exp_squared_error(x, y):
+    curve = np.exp2(x)
+    indices = np.isfinite(curve)
+    error = (y[indices] - curve[indices])**2
+    return np.mean(error)
 
-    def safe_exp(base, x):
-        res = []
-        with np.errstate(over='ignore'):
-            res = np.power(base, x)
-
-        x_value_no_inf_or_nan = []
-        y_value_no_corresponding_nan_or_inf = []
-        for i in range(len(res)):
-            if not (res[i] == None or res[i] == np.inf or res[i] == -np.inf or np.isnan(res[i])):
-                x_value_no_inf_or_nan.append(x[i])
-                y_value_no_corresponding_nan_or_inf.append(y[i])
-
-        return x_value_no_inf_or_nan, y_value_no_corresponding_nan_or_inf
-
-    best_error = float('inf')
-    best_base = None
-    for exp_base in range(2, max_base):
-        exp_x_no_inf, y_values_no_corresponding_inf = safe_exp(exp_base, x)
-        A = np.vstack([exp_x_no_inf, np.ones(len(exp_x_no_inf))]).T
-        m, c = np.linalg.lstsq(A, y_values_no_corresponding_inf, rcond=None)[0]
-        y_fit = m*exp_x_no_inf + c
-        error = np.sum((y_values_no_corresponding_inf - y_fit)**2)
-        if error < best_error:
-            best_error = error
-            best_base = exp_base
-    return best_error, best_base
 
 
 def factorial_squared_error(x, y):
