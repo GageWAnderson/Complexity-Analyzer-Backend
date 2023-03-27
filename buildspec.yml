@@ -17,12 +17,12 @@ phases:
     commands:
       - echo "Zipping deployment package"
       - cd functions
-      - zip -r9 ../input_validator_deployment_package.zip input_validator
-      - zip -r9 ../get_results_deployment_package.zip get_results_info
-      - zip -r9 ../code_security_validator_deployment_package.zip code_security_validator
-      - zip -r9 ../code_complexity_analyzer_deployment_package.zip code_complexity_analyzer
-      - zip -r9 ../post_complexity_analyzer_results_deployment_package.zip post_complexity_analyzer_results
-      - zip -r9 ../get_result_graph_deployment_package.zip get_result_graph
+      - zip ../input_validator_deployment_package.zip input_validator/input_validator.py
+      - zip ../get_results_deployment_package.zip get_results_info/get_results_info.py
+      - zip ../code_security_validator_deployment_package.zip code_security_validator/code_security_validator.py
+      - zip ../code_complexity_analyzer_deployment_package.zip code_complexity_analyzer/code_complexity_analyzer.py
+      - zip ../post_complexity_analyzer_results_deployment_package.zip post_complexity_analyzer_results/post_complexity_analyzer_results.py
+      - zip ../get_result_graph_deployment_package.zip get_result_graph/get_result_graph.py
       - cd ..
       - echo "Done"
 
