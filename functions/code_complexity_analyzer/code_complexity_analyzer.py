@@ -223,7 +223,7 @@ def exp_squared_error(x, y):
 
 
 def get_factorial_squared_error(x, y):
-    fact_x = np.factorial(x)
+    fact_x = np.math.factorial(x)
     A = np.vstack([fact_x, np.ones(len(fact_x))]).T
     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
     y_fit = m*fact_x + c
