@@ -10,7 +10,6 @@ import ast
 import numpy as np
 import random
 import traceback
-# import scipy
 
 lambdaClient = boto3.client('lambda')
 
@@ -151,13 +150,13 @@ def get_complexity_from_runtime_graph(runtime_graph):
 
         nlogn_best_error = nlogn_squared_error(x_axis, y_axis)
 
-        # exp_best_fit, exp_best_base = exp_squared_error(
-        #     x_axis, y_axis, max_exp_base)
+        exp_best_error, exp_best_base = exp_squared_error(
+            x_axis, y_axis, max_exp_base)
 
-        # factorial_squared_error = factorial_squared_error(x_axis, y_axis)
+        factorial_squared_error = factorial_squared_error(x_axis, y_axis)
 
         # TODO: MVP+ Support non-polynomial complexity
-        return format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error)
+        return format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, exp_best_base, factorial_squared_error)
     except Exception as e:
         logger.debug(
             f'Failed to calculate complexity from runtime graph: {traceback.format_exc()}')
@@ -216,61 +215,63 @@ def nlogn_squared_error(x, y):
         raise e
 
 
-# Handles exponentials of degree [2, max_exp_base]
-# def exp_squared_error(x, y, max_base):
+def exp_squared_error(x, y, max_base):
 
-#     def safe_exp(base, x):
-#         res = []
-#         with np.errstate(over='ignore'):
-#             res = np.power(base, x)
+    def safe_exp(base, x):
+        res = []
+        with np.errstate(over='ignore'):
+            res = np.power(base, x)
 
-#         x_value_no_inf_or_nan = []
-#         y_value_no_corresponding_nan_or_inf = []
-#         for i in range(len(res)):
-#             if not (res[i] == None or res[i] == np.inf or res[i] == -np.inf or np.isnan(res[i])):
-#                 x_value_no_inf_or_nan.append(x[i])
-#                 y_value_no_corresponding_nan_or_inf.append(y[i])
+        x_value_no_inf_or_nan = []
+        y_value_no_corresponding_nan_or_inf = []
+        for i in range(len(res)):
+            if not (res[i] == None or res[i] == np.inf or res[i] == -np.inf or np.isnan(res[i])):
+                x_value_no_inf_or_nan.append(x[i])
+                y_value_no_corresponding_nan_or_inf.append(y[i])
 
-#         return x_value_no_inf_or_nan, y_value_no_corresponding_nan_or_inf
+        return x_value_no_inf_or_nan, y_value_no_corresponding_nan_or_inf
 
-#     best_fit = None
-#     best_error = float('inf')
-#     best_base = None
-#     for exp_base in range(2, max_base):
-#         exp_x_no_inf, y_values_no_corresponding_inf = safe_exp(exp_base, x)
-#         A = np.vstack([exp_x_no_inf, np.ones(len(exp_x_no_inf))]).T
-#         m, c = np.linalg.lstsq(A, y_values_no_corresponding_inf, rcond=None)[0]
-#         y_fit = m*exp_x_no_inf + c
-#         error = np.sum((y_values_no_corresponding_inf - y_fit)**2)
-#         if error < best_error:
-#             best_fit = y_fit
-#             best_error = error
-#             best_base = exp_base
-#     return best_fit, best_base
-
-# TODO: Uncomment this when we add scipy to a lambda layer
-# def factorial_squared_error(x, y):
-#     fact_x = scipy.special.factorial(x)
-#     A = np.vstack([fact_x, np.ones(len(fact_x))]).T
-#     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
-#     y_fit = m*fact_x + c
-#     error = np.sum((y - y_fit)**2)
-#     return error
+    best_error = float('inf')
+    best_base = None
+    for exp_base in range(2, max_base):
+        exp_x_no_inf, y_values_no_corresponding_inf = safe_exp(exp_base, x)
+        A = np.vstack([exp_x_no_inf, np.ones(len(exp_x_no_inf))]).T
+        m, c = np.linalg.lstsq(A, y_values_no_corresponding_inf, rcond=None)[0]
+        y_fit = m*exp_x_no_inf + c
+        error = np.sum((y_values_no_corresponding_inf - y_fit)**2)
+        if error < best_error:
+            best_error = error
+            best_base = exp_base
+    return best_error, best_base
 
 
-def format_complexity(polynomial_best_fit, polynomial_complexity, log_best_fit, nlogn_best_fit):
-    best_fit = min(polynomial_best_fit, log_best_fit, nlogn_best_fit)
-    if polynomial_best_fit == best_fit:
+def factorial_squared_error(x, y):
+    fact_x = np.factorial(x)
+    A = np.vstack([fact_x, np.ones(len(fact_x))]).T
+    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    y_fit = m*fact_x + c
+    error = np.sum((y - y_fit)**2)
+    return error
+
+
+def format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, exp_base, factorial_best_error):
+    best_error = min(polynomial_best_error, log_best_error,
+                     nlogn_best_error, exp_best_error, factorial_best_error)
+    if polynomial_best_error == best_error:
         if polynomial_complexity == 0:
             return 'O(1)'
         elif polynomial_complexity == 1:
             return 'O(n)'
         else:
             return f'O(n^{polynomial_complexity})'
-    elif log_best_fit == best_fit:
+    elif log_best_error == best_error:
         return 'O(log(n))'
-    elif nlogn_best_fit == best_fit:
+    elif nlogn_best_error == best_error:
         return 'O(nlog(n))'
+    elif exp_best_error == best_error:
+        return f'O({exp_base}^n)'
+    elif factorial_best_error == best_error:
+        return 'O(n!)'
     else:
         raise Exception('No best fit found')
 
