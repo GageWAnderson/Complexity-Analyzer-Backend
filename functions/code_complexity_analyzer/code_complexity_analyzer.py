@@ -149,13 +149,13 @@ def get_complexity_from_runtime_graph(runtime_graph):
 
         nlogn_best_error = nlogn_squared_error(x_axis, y_axis)
 
-        exp_best_error, exp_best_base = exp_squared_error(
+        exp_best_error = exp_squared_error(
             x_axis, y_axis)
 
         factorial_squared_error = factorial_squared_error(x_axis, y_axis)
 
         # TODO: MVP+ Support non-polynomial complexity
-        return format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, exp_best_base, factorial_squared_error)
+        return format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, factorial_squared_error)
     except Exception as e:
         logger.debug(
             f'Failed to calculate complexity from runtime graph: {traceback.format_exc()}')
@@ -231,7 +231,7 @@ def factorial_squared_error(x, y):
     return error
 
 
-def format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, exp_base, factorial_best_error):
+def format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, factorial_best_error):
     best_error = min(polynomial_best_error, log_best_error,
                      nlogn_best_error, exp_best_error, factorial_best_error)
     if polynomial_best_error == best_error:
@@ -246,7 +246,7 @@ def format_complexity(polynomial_best_error, polynomial_complexity, log_best_err
     elif nlogn_best_error == best_error:
         return 'O(nlog(n))'
     elif exp_best_error == best_error:
-        return f'O({exp_base}^n)'
+        return f'O(2^n)'
     elif factorial_best_error == best_error:
         return 'O(n!)'
     else:
