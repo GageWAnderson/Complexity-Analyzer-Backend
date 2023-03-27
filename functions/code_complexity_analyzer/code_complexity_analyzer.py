@@ -53,7 +53,7 @@ def lambda_handler(event, context):
 
         logger.debug(f'Running code with variable input: {args}')
         runtime_graph = run_code_with_variable_input(
-            compiled_function, args, maxInputSize=default_max_input_size)
+            compiled_function, args, maxInputSize)
 
         logger.debug(f'runtime_graph: {runtime_graph}')
 
@@ -87,7 +87,7 @@ def compile_input_function_restricted(input_function_body, args):
         raise e
 
 
-def run_code_with_variable_input(compiled_function, args, maxInputSize):
+def run_code_with_variable_input(compiled_function, args, maxInputSize=default_max_input_size):
     runtime_graph = []
     variable_arg, variable_arg_type = getVariableArg(args)
     arg_range = [0, maxInputSize]
