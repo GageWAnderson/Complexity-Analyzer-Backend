@@ -152,7 +152,7 @@ def get_complexity_from_runtime_graph(runtime_graph):
         exp_best_error = exp_squared_error(
             x_axis, y_axis)
 
-        factorial_squared_error = factorial_squared_error(x_axis, y_axis)
+        factorial_squared_error = get_factorial_squared_error(x_axis, y_axis)
 
         # TODO: MVP+ Support non-polynomial complexity
         return format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, factorial_squared_error)
@@ -222,7 +222,7 @@ def exp_squared_error(x, y):
 
 
 
-def factorial_squared_error(x, y):
+def get_factorial_squared_error(x, y):
     fact_x = np.factorial(x)
     A = np.vstack([fact_x, np.ones(len(fact_x))]).T
     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
