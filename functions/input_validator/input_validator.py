@@ -58,7 +58,7 @@ def lambda_handler(event, context):
         try:
             logger.debug('Calling complexity analyzer...')
             call_complexity_analyzer(
-                body_json['inputCode'], body_json['args'], body_json['maxInputSize'], user_id)
+                body_json['inputCode'], body_json['args'], body_json['maxInputSize'], body_json['uuid'])
             return construct_response(codes.ok, 'Input code passed security check')
         except Exception as e:
             return construct_response(codes.bad_request, 'Failed to call complexity analyzer', str(e))
