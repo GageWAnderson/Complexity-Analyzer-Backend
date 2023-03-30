@@ -29,16 +29,14 @@ logger.setLevel(logging.DEBUG)
 def lambda_handler(event, context):
 
     try:
-        user_id = event['params']['header']['user-id']
-    except Exception as e:
-        return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
-
-    try:
         body_json = event['body-json']
     except Exception as e:
         return construct_response(codes.bad_request, 'Invalid JSON body', str(e))
 
-    if 'inputCode' not in body_json:
+    if 'uuid' not in body_json:
+        # TODO: Check if the uuid is valid with AWS Cognito
+        return construct_response(codes.bad_request, 'Missing user id field')
+    elif 'inputCode' not in body_json:
         return construct_response(codes.bad_request, 'Missing input code field')
     elif 'inputCode' in body_json and len(body_json['inputCode']) > max_code_length:
         return construct_response(codes.bad_request, 'Input code too long')
