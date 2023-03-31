@@ -52,17 +52,11 @@ def get_result_graph_as_json(user_id, timestamp):
 
 
 def construct_response(status_code, body=None, error=None):
-    body = None
-    if error:
-        body = {"error": error}
-    else:
-        body = {"results-graph": body}
-
     return {
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
         },
-        "body": body,
+        "body": json.dumps({"body": body, "error": error}),
     }
