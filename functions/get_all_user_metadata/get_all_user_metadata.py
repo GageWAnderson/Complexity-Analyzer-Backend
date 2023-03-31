@@ -34,21 +34,20 @@ def lambda_handler(event, context):
 
 
 def construct_response(status_code, body=None, error=None):
+    body = None
     if error:
-        response = {
-            "statusCode": status_code,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
-            "body": json.dumps({"error": error}),
-        }
+        body = {"error": error}
     else:
-        response = {
-            "statusCode": status_code,
-            "body": json.dumps({"user-metadata": body}),
-        }
-    return response
+        body = {"user-metadata": body}
+
+    return {
+        "statusCode": status_code,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+        },
+        "body": body,
+    }
 
 
 def get_all_user_metadata(user_id):

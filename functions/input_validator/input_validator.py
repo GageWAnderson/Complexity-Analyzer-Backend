@@ -170,15 +170,17 @@ def isValidMaxInputSize(maxInputSize):
 
 
 def construct_response(status_code, body=None, error=None):
+    body = None
     if error:
-        response = {
-            "statusCode": status_code,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
-            "body": json.dumps({"error": error}),
-        }
+        body = {"error": error}
     else:
-        response = {"statusCode": status_code, "body": json.dumps({"message": body})}
-    return response
+        body = {"message": body}
+
+    return {
+        "statusCode": status_code,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+        },
+        "body": body,
+    }
