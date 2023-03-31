@@ -3,56 +3,60 @@ import boto3
 import logging
 from requests import codes
 
-s3 = boto3.resource('s3')
+s3 = boto3.resource("s3")
 
-user_results_s3_bucket = 'complexity-analyzer-results-test'
+user_results_s3_bucket = "complexity-analyzer-results-test"
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 
 def lambda_handler(event, context):
-
     try:
-        user_id = event['params']['header']['user-id']
+        uuid = event["queryStringParameters"]["uuid"]
+        timestamp = event["queryStringParameters"]["timestamp"]
     except Exception as e:
-        return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
+        return construct_response(
+            codes.bad_request, "Unable to get UUID from request", str(e)
+        )
 
     try:
-        results = query_user_results_metadata(user_id)
+        results = get_metadata_by_timestamp(uuid, timestamp)
         if not results:
-            return construct_response(codes.not_found, f'No results found for user {user_id}')
+            return construct_response(
+                codes.not_found, f"No results found for user {uuid}"
+            )
         else:
-            # TODO: Modify response to contain results with user results metadata
             return construct_response(codes.ok, body=json.dumps(results))
     except Exception as e:
-        return construct_response(codes.bad_request, error=f'Error querying user results: {str(e)}')
+        return construct_response(
+            codes.bad_request, error=f"Error querying user results: {str(e)}"
+        )
 
 
 def construct_response(status_code, body=None, error=None):
     if error:
-        response = {
-            'statusCode': status_code,
-            'body': json.dumps({'error': error})
-        }
+        response = {"statusCode": status_code, "body": json.dumps({"error": error})}
     else:
         response = {
-            'statusCode': status_code,
-            'body': json.dumps({'user-metadata': body})
+            "statusCode": status_code,
+            "body": json.dumps({"user-metadata": body}),
         }
     return response
 
 
-def query_user_results_metadata(user_id):
-    result = []
-    bucket = s3.Bucket(user_results_s3_bucket)
-    logger.debug(
-        f'Getting user metadata objects from bucket {user_results_s3_bucket}')
-    for obj in bucket.objects.filter(Prefix=user_id):
-        logger.debug(f'Object key: {obj.key}')
-        if obj.key.endswith('metadata.json'):
-            logger.debug(f'Getting metadata object: {obj.key}')
-            metadata_object = s3.Object(user_results_s3_bucket, obj.key)
-            metadata = json.loads(metadata_object.get()['Body'].read())
-            result.append(metadata)
-    return result
+def get_metadata_by_timestamp(user_id, timestamp):
+    metadata_object = f"{user_id}/{timestamp}/metadata.json"
+
+    try:
+        metadata = (
+            s3.Object(user_results_s3_bucket, metadata_object)
+            .get()["Body"]
+            .read()
+            .decode("utf-8")
+        )
+        logger.debug(f"Metadata file: {metadata}")
+        return metadata
+    except Exception as e:
+        logger.error(f"Error getting graph object: {str(e)}")
+        raise e
