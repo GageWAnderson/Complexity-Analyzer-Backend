@@ -40,12 +40,17 @@ def lambda_handler(event, context):
 def get_result_graph_as_json(user_id, timestamp):
     graph_object = f"{user_id}/{timestamp}/graph.csv"
 
+    result = []
+
     try:
         csv_graph = s3.Object(user_results_s3_bucket, graph_object)
         csv_file = csv_graph.get()["Body"].read().decode("utf-8")
         logger.debug(f"CSV file: {csv_file}")
         csv_reader = csv.DictReader(csv_file)
-        return [row for row in csv_reader]
+        for row in csv_reader:
+            logger.debug(f"Row: {row}")
+            result.append(row)
+        return result
     except Exception as e:
         logger.error(f"Error getting graph object: {str(e)}")
         raise e
