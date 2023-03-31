@@ -48,7 +48,11 @@ def get_result_graph_as_json(user_id, timestamp):
         logger.debug(f"CSV file: {csv_file}")
         rows = csv_file.split("\n")
         for row in rows:
-            x, y = row.split(",")
+            try:
+                x, y = row.split(",")
+            except Exception as e:
+                logger.error(f"Error parsing row: {str(e)}")
+                continue
             logger.debug(f"X: {x}, Y: {y}")
             result.append({"x": x, "y": y})
         return result
