@@ -23,7 +23,7 @@ def lambda_handler(event, context):
         if not results:
             return construct_response(codes.not_found, f'No results found for user {uuid}')
         else:
-            return construct_response(codes.ok, body=json.dumps(results))
+            return construct_response(codes.ok, body=results)
     except Exception as e:
         return construct_response(codes.bad_request, error=f'Error querying user results: {str(e)}')
 
