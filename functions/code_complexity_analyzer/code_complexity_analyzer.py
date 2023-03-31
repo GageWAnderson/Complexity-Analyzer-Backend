@@ -11,10 +11,10 @@ import numpy as np
 import random
 import traceback
 
-lambdaClient = boto3.client('lambda')
+lambdaClient = boto3.client("lambda")
 
 safe_locals = {}
-safe_globals = {'ast': ast, '__builtins__': safe_builtins, '_getiter_': iter}
+safe_globals = {"ast": ast, "__builtins__": safe_builtins, "_getiter_": iter}
 
 # TODO: Think Harder about what this should be
 max_int_size = 10000
@@ -32,7 +32,7 @@ default_list_of_strings_value = ["a"]
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-restricted_function_name = 'restricted_function'
+restricted_function_name = "restricted_function"
 
 # Defines the timeout for 1 run of the input code
 # input_code_timeout_seconds * number_of_steps < function timeout
@@ -41,69 +41,78 @@ input_code_timeout_seconds = 60 * 10  # Lambda handles overall timeout
 
 def lambda_handler(event, context):
     try:
-        input_function_body = event['inputCode']
-        args = event['args']
-        maxInputSize = event['maxInputSize']
-        user_id = event['user-id']
+        input_function_body = event["inputCode"]
+        args = event["args"]
+        maxInputSize = event["maxInputSize"]
+        user_id = event["user-id"]
 
         compiled_function = compile_input_function_restricted(
-            input_function_body, parseArgsToCommaDelimitedList(args))
+            input_function_body, parseArgsToCommaDelimitedList(args)
+        )
 
-        logger.debug(f'Running code with variable input: {args}')
+        logger.debug(f"Running code with variable input: {args}")
         runtime_graph = run_code_with_variable_input(
-            compiled_function, args, maxInputSize)
+            compiled_function, args, maxInputSize
+        )
 
-        logger.debug(f'runtime_graph: {runtime_graph}')
+        logger.debug(f"runtime_graph: {runtime_graph}")
 
         complexity = get_complexity_from_runtime_graph(runtime_graph)
 
-        publish_results(input_function_body, args,
-                        complexity, runtime_graph, user_id)
+        publish_results(input_function_body, args, complexity, runtime_graph, user_id)
 
-        return construct_response(codes.ok, 'Called Code Complexity Analyzer')
+        return construct_response(codes.ok, "Called Code Complexity Analyzer")
     except Exception as e:
-        return construct_response(codes.bad_request, 'Failed to publish results', str(e))
+        return construct_response(
+            codes.bad_request, "Failed to publish results", str(e)
+        )
 
 
 def compile_input_function_restricted(input_function_body, args):
     try:
-        logger.debug('Compiling input code in restricted envionment')
+        logger.debug("Compiling input code in restricted envionment")
         compiled_function = compile_restricted_function(
-            args, input_function_body, restricted_function_name)
+            args, input_function_body, restricted_function_name
+        )
 
         # TODO: Handle compilation errors inside the compiled_function object
         logger.debug(str(compiled_function))
 
-        if str(compiled_function.errors) != '()':
-            return construct_response(codes.bad_request, f'Failed to compile input code in restricted envionment, warning this code might be malicious.: {str(compiled_function.errors)}')
+        if str(compiled_function.errors) != "()":
+            return construct_response(
+                codes.bad_request,
+                f"Failed to compile input code in restricted envionment, warning this code might be malicious.: {str(compiled_function.errors)}",
+            )
 
         exec(compiled_function.code, safe_globals, safe_locals)
         return safe_locals[restricted_function_name]
     except Exception as e:
         logger.debug(
-            "Failed to compile input code in restricted envionment, warning this code might be malicious.")
+            "Failed to compile input code in restricted envionment, warning this code might be malicious."
+        )
         raise e
 
 
-def run_code_with_variable_input(compiled_function, args, maxInputSize=default_max_input_size):
+def run_code_with_variable_input(
+    compiled_function, args, maxInputSize=default_max_input_size
+):
     runtime_graph = []
     variable_arg, variable_arg_type = getVariableArg(args)
     arg_range = [0, maxInputSize]
     step_size = getStepSize(arg_range)
 
-    logger.debug(f'arg_range: {arg_range}, step_size: {step_size}')
+    logger.debug(f"arg_range: {arg_range}, step_size: {step_size}")
     for i in range(number_of_steps):
-        variable_arg_value = getArgValue(
-            variable_arg_type, arg_range, step_size, i)
+        variable_arg_value = getArgValue(variable_arg_type, arg_range, step_size, i)
         args_for_this_run = getArgsForThisRun(args, variable_arg_value)
         try:
-            runtime = run_and_time_code_execution(
-                compiled_function, args_for_this_run)
+            runtime = run_and_time_code_execution(compiled_function, args_for_this_run)
             runtime_graph.append((variable_arg_value, runtime))
         except Exception as e:
             # Some inputs may fail, don't stop the whole execution since others may succeed
             logger.debug(
-                f'Failed to run code with variable input: Args: {args_for_this_run}, Exception: {str(e)}')
+                f"Failed to run code with variable input: Args: {args_for_this_run}, Exception: {str(e)}"
+            )
 
     return runtime_graph
 
@@ -119,10 +128,10 @@ def run_and_time_code_execution(compiled_function, args):
         start_time = time.time()
         compiled_function(*args)
     except TimeoutError as e1:
-        logger.debug('Code execution timed out')
+        logger.debug("Code execution timed out")
         raise e1
     except Exception as e2:
-        logger.debug(f'Code execution failed: {str(e2)}')
+        logger.debug(f"Code execution failed: {str(e2)}")
         raise e2
 
     timer.cancel()
@@ -133,52 +142,53 @@ def run_and_time_code_execution(compiled_function, args):
 
 def get_complexity_from_runtime_graph(runtime_graph):
     try:
-
-        logger.debug(
-            f'Calculating complexity from runtime graph: {runtime_graph}')
+        logger.debug(f"Calculating complexity from runtime graph: {runtime_graph}")
         points = np.array(runtime_graph)
         x_axis = points[:, 0]
         y_axis = points[:, 1]
 
         # Find the Polynomial that fits the data
         polynomial_best_error, best_coefficients = find_best_polyfit(
-            x_axis, y_axis, max_polynomial_degree)
+            x_axis, y_axis, max_polynomial_degree
+        )
         polynomial_complexity = len(best_coefficients) - 1
 
         log_best_error = log_squared_error(x_axis, y_axis)
 
         nlogn_best_error = nlogn_squared_error(x_axis, y_axis)
 
-        exp_best_error = exp_squared_error(
-            x_axis, y_axis)
-
-        factorial_squared_error = get_factorial_squared_error(x_axis, y_axis)
-
         # TODO: MVP+ Support non-polynomial complexity
-        return format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, factorial_squared_error)
+        return format_complexity(
+            polynomial_best_error,
+            polynomial_complexity,
+            log_best_error,
+            nlogn_best_error,
+        )
     except Exception as e:
         logger.debug(
-            f'Failed to calculate complexity from runtime graph: {traceback.format_exc()}')
+            f"Failed to calculate complexity from runtime graph: {traceback.format_exc()}"
+        )
         raise e
 
 
 def find_best_polyfit(x, y, n):
     try:
         best_coefficients = None
-        best_error = float('inf')
+        best_error = float("inf")
         # Degree 0 = Constant, Degree 1 = Linear, etc.
-        for degree in range(n+1):
+        for degree in range(n + 1):
             coefficients = np.polyfit(x, y, degree)
             fit = np.polyval(coefficients, x)
-            error = np.sum((fit - y)**2)
+            error = np.sum((fit - y) ** 2)
             if error < best_error:
                 best_coefficients = coefficients
                 best_error = error
         logger.debug(
-            f'Best error: {best_error}, Best coefficients: {best_coefficients}')
+            f"Best error: {best_error}, Best coefficients: {best_coefficients}"
+        )
         return best_error, best_coefficients
     except Exception as e:
-        logger.debug(f'Failed to find best polyfit: {traceback.format_exc()}')
+        logger.debug(f"Failed to find best polyfit: {traceback.format_exc()}")
         raise e
 
 
@@ -188,13 +198,12 @@ def log_squared_error(x, y):
         log_x = np.log(x_axis_no_zeros)
         A = np.vstack([log_x, np.ones(len(log_x))]).T
         m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
-        y_fit = m*log_x + c
-        error = np.sum((y_axis_no_zeros - y_fit)**2)
-        logger.debug(f'Log squared error: {error}')
+        y_fit = m * log_x + c
+        error = np.sum((y_axis_no_zeros - y_fit) ** 2)
+        logger.debug(f"Log squared error: {error}")
         return error
     except Exception as e:
-        logger.debug(
-            f'Failed to calculate log squared error: {traceback.format_exc()}')
+        logger.debug(f"Failed to calculate log squared error: {traceback.format_exc()}")
         raise e
 
 
@@ -204,95 +213,73 @@ def nlogn_squared_error(x, y):
         nlogn = (x_axis_no_zeros) * np.log(x_axis_no_zeros)
         A = np.vstack([nlogn, np.ones(len(nlogn))]).T
         m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
-        y_fit = m*nlogn + c
-        error = np.sum((y_axis_no_zeros - y_fit)**2)
-        logger.debug(f'NlogN squared error: {error}')
+        y_fit = m * nlogn + c
+        error = np.sum((y_axis_no_zeros - y_fit) ** 2)
+        logger.debug(f"NlogN squared error: {error}")
         return error
     except Exception as e:
         logger.debug(
-            f'Failed to calculate nlogn squared error: {traceback.format_exc()}')
+            f"Failed to calculate nlogn squared error: {traceback.format_exc()}"
+        )
         raise e
 
 
-def exp_squared_error(x, y):
-    curve = np.exp2(x)
-    indices = np.isfinite(curve)
-    error = (y[indices] - curve[indices])**2
-    return np.mean(error)
-
-
-
-def get_factorial_squared_error(x, y):
-    fact_x = np.math.factorial(x)
-    A = np.vstack([fact_x, np.ones(len(fact_x))]).T
-    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
-    y_fit = m*fact_x + c
-    error = np.sum((y - y_fit)**2)
-    return error
-
-
-def format_complexity(polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error, exp_best_error, factorial_best_error):
-    best_error = min(polynomial_best_error, log_best_error,
-                     nlogn_best_error, exp_best_error, factorial_best_error)
+def format_complexity(
+    polynomial_best_error, polynomial_complexity, log_best_error, nlogn_best_error
+):
+    best_error = min(polynomial_best_error, log_best_error, nlogn_best_error)
     if polynomial_best_error == best_error:
         if polynomial_complexity == 0:
-            return 'O(1)'
+            return "O(1)"
         elif polynomial_complexity == 1:
-            return 'O(n)'
+            return "O(n)"
         else:
-            return f'O(n^{polynomial_complexity})'
+            return f"O(n^{polynomial_complexity})"
     elif log_best_error == best_error:
-        return 'O(log(n))'
+        return "O(log(n))"
     elif nlogn_best_error == best_error:
-        return 'O(nlog(n))'
-    elif exp_best_error == best_error:
-        return f'O(2^n)'
-    elif factorial_best_error == best_error:
-        return 'O(n!)'
+        return "O(nlog(n))"
     else:
-        raise Exception('No best fit found')
+        raise Exception("No best fit found")
 
 
 def publish_results(inputCode, args, complexity, complexity_graph, user_id):
     try:
         logger.debug(
-            f'Publishing results to post_complexity_analyzer_results (user_id: {user_id}')
+            f"Publishing results to post_complexity_analyzer_results (user_id: {user_id}"
+        )
         lambdaClient.invoke(
-            FunctionName='post_complexity_analyzer_results',
-            InvocationType='Event',
-            Payload=json.dumps({
-                'inputCode': inputCode,
-                'args': args,
-                'complexity': complexity,
-                'complexity-graph': complexity_graph,
-                'user-id': user_id
-            })
+            FunctionName="post_complexity_analyzer_results",
+            InvocationType="Event",
+            Payload=json.dumps(
+                {
+                    "inputCode": inputCode,
+                    "args": args,
+                    "complexity": complexity,
+                    "complexity-graph": complexity_graph,
+                    "user-id": user_id,
+                }
+            ),
         )
     except Exception as e:
-        logger.debug(f'Failed to publish results: {traceback.format_exc()}')
+        logger.debug(f"Failed to publish results: {traceback.format_exc()}")
         raise e
 
 
 def parseArgsToCommaDelimitedList(args):
-    logger.debug(f'Parsing args to comma delimited list: {args}')
+    logger.debug(f"Parsing args to comma delimited list: {args}")
     result = []
     for arg in args:
-        result.append(arg['argName'])
+        result.append(arg["argName"])
     logger.debug(f'Parsed args to comma delimited list: {",".join(result)}')
-    return ','.join(result)
+    return ",".join(result)
 
 
 def construct_response(status_code, body=None, error=None):
     if error:
-        response = {
-            'statusCode': status_code,
-            'body': json.dumps({'error': error})
-        }
+        response = {"statusCode": status_code, "body": json.dumps({"error": error})}
     else:
-        response = {
-            'statusCode': status_code,
-            'body': json.dumps({'message': body})
-        }
+        response = {"statusCode": status_code, "body": json.dumps({"message": body})}
     return response
 
 
@@ -303,17 +290,17 @@ def getStepSize(arg_range):
 def getArgsForThisRun(args, variable_arg_value):
     result = []
     for arg in args:
-        if arg['variable']:
+        if arg["variable"]:
             result.append(variable_arg_value)
         else:
             # TODO: Update to use the enumeration of argTypes in the Lambda Layer
-            if arg['argType'] == 'int':
+            if arg["argType"] == "int":
                 result.append(default_int_value)
-            elif arg['argType'] == 'string':
+            elif arg["argType"] == "string":
                 result.append(default_string_value)
-            elif arg['argType'] == 'list<int>':
+            elif arg["argType"] == "list<int>":
                 result.append(default_list_of_ints_value)
-            elif arg['argType'] == 'list<string>':
+            elif arg["argType"] == "list<string>":
                 result.append(default_list_of_strings_value)
             else:
                 raise Exception("Unsupported arg type")
@@ -340,14 +327,14 @@ def getArgValue(arg_type, arg_range, step_size, step_number):
                 res.append(random.choice(string.ascii_lowercase))
             return res
     except Exception as e:
-        logger.debug(f'Failed to get arg value: {traceback.format_exc()}')
+        logger.debug(f"Failed to get arg value: {traceback.format_exc()}")
         raise e
 
 
 def getVariableArg(args):
     for arg in args:
-        if arg['variable']:
-            return arg, arg['argType']
+        if arg["variable"]:
+            return arg, arg["argType"]
     raise Exception("No variable arg found")
 
 
