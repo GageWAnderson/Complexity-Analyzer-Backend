@@ -46,10 +46,11 @@ def get_result_graph_as_json(user_id, timestamp):
         csv_graph = s3.Object(user_results_s3_bucket, graph_object)
         csv_file = csv_graph.get()["Body"].read().decode("utf-8")
         logger.debug(f"CSV file: {csv_file}")
-        csv_reader = csv.DictReader(csv_file)
-        for row in csv_reader:
-            logger.debug(f"Row: {row}")
-            result.append(row)
+        rows = csv_file.split("\n")
+        for row in rows:
+            x, y = row.split(",")
+            logger.debug(f"X: {x}, Y: {y}")
+            result.append({"x": x, "y": y})
         return result
     except Exception as e:
         logger.error(f"Error getting graph object: {str(e)}")
