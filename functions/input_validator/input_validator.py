@@ -30,7 +30,7 @@ logger.setLevel(logging.DEBUG)
 def lambda_handler(event, context):
 
     try:
-        body_json = event['body-json']
+        request_body = json.loads(event['body'])
     except Exception as e:
         return construct_response(codes.bad_request, 'Invalid JSON body', str(e))
 
@@ -40,29 +40,29 @@ def lambda_handler(event, context):
         return construct_response(codes.bad_request, 'Unable to get UUID from request', str(e))
 
 
-    if 'inputCode' not in body_json:
+    if 'inputCode' not in request_body:
         return construct_response(codes.bad_request, 'Missing input code field')
-    elif 'inputCode' in body_json and len(body_json['inputCode']) > max_code_length:
+    elif 'inputCode' in request_body and len(request_body['inputCode']) > max_code_length:
         return construct_response(codes.bad_request, 'Input code too long')
-    elif 'args' not in body_json:
+    elif 'args' not in request_body:
         return construct_response(codes.bad_request, 'Missing arguments field')
-    elif 'args' in body_json and len(body_json['args']) > max_args_number or len(body_json['args']) < min_args_number:
+    elif 'args' in request_body and len(request_body['args']) > max_args_number or len(request_body['args']) < min_args_number:
         return construct_response(codes.bad_request, 'Invalid argument number')
-    elif 'maxInputSize' not in body_json:
+    elif 'maxInputSize' not in request_body:
         return construct_response(codes.bad_request, 'Missing max input size field')
-    elif not isValidMaxInputSize(body_json['maxInputSize']):
+    elif not isValidMaxInputSize(request_body['maxInputSize']):
         return construct_response(codes.bad_request, 'Invalid max input size')
     else:
-        response = validate_all_arguments(body_json)
+        response = validate_all_arguments(request_body)
         if response:
             return response
 
     logger.debug('Validating input code...')
-    if validate_code_security(body_json['inputCode'], body_json['args']):
+    if validate_code_security(request_body['inputCode'], request_body['args']):
         try:
             logger.debug('Calling complexity analyzer...')
             call_complexity_analyzer(
-                body_json['inputCode'], body_json['args'], body_json['maxInputSize'], uuid)
+                request_body['inputCode'], request_body['args'], request_body['maxInputSize'], uuid)
             return construct_response(codes.ok, 'Input code passed security check')
         except Exception as e:
             return construct_response(codes.bad_request, 'Failed to call complexity analyzer', str(e))

@@ -16,15 +16,15 @@ logger.setLevel(logging.DEBUG)
 
 def lambda_handler(event, context):
     try:
-        user_id = event['params']['header']['user-id']
-        timestamp = event['params']['header']['timestamp']
+        uuid = event['queryStringParameters']['uuid']
+        timestamp = event['queryStringParameters']['timestamp']
     except Exception as e:
         return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
 
     try:
-        results = get_result_graph_as_json(user_id, timestamp)
+        results = get_result_graph_as_json(uuid, timestamp)
         if not results or len(results) == 0:
-            return construct_response(codes.not_found, f'No results found for user {user_id}')
+            return construct_response(codes.not_found, f'No results found for user {uuid}')
         else:
             return construct_response(codes.ok, body=results)
     except Exception as e:
