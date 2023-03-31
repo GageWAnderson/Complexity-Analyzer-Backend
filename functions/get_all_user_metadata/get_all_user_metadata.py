@@ -14,16 +14,15 @@ logger.setLevel(logging.DEBUG)
 def lambda_handler(event, context):
 
     try:
-        user_id = event['params']['header']['user-id']
+        uuid = event['queryStringParameters']['uuid']
     except Exception as e:
-        return construct_response(codes.bad_request, f'Invalid user ID header: {str(e)}')
+        return construct_response(codes.bad_request, 'Unable to get UUID from request', str(e))
 
     try:
-        results = query_user_results_metadata(user_id)
+        results = get_all_user_metadata(uuid)
         if not results:
-            return construct_response(codes.not_found, f'No results found for user {user_id}')
+            return construct_response(codes.not_found, f'No results found for user {uuid}')
         else:
-            # TODO: Modify response to contain results with user results metadata
             return construct_response(codes.ok, body=json.dumps(results))
     except Exception as e:
         return construct_response(codes.bad_request, error=f'Error querying user results: {str(e)}')
@@ -43,7 +42,7 @@ def construct_response(status_code, body=None, error=None):
     return response
 
 
-def query_user_results_metadata(user_id):
+def get_all_user_metadata(user_id):
     result = []
     bucket = s3.Bucket(user_results_s3_bucket)
     logger.debug(

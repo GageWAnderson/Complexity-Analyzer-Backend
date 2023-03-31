@@ -16,6 +16,7 @@ number_of_arg_fields = 3
 MAX_INPUT_SIZE_LIMIT = 1000000
 
 lambdaClient = boto3.client('lambda')
+client = boto3.client('cognito-idp')
 
 # TODO: Make an enumeration of allowed arg type strings in a Lambda Layer
 # TODO: Inform the API caller about the allowed arg types and their formatting
@@ -33,10 +34,13 @@ def lambda_handler(event, context):
     except Exception as e:
         return construct_response(codes.bad_request, 'Invalid JSON body', str(e))
 
-    if 'uuid' not in body_json:
-        # TODO: Check if the uuid is valid with AWS Cognito
-        return construct_response(codes.bad_request, 'Missing user id field')
-    elif 'inputCode' not in body_json:
+    try:
+        uuid = event['queryStringParameters']['uuid']
+    except Exception as e:
+        return construct_response(codes.bad_request, 'Unable to get UUID from request', str(e))
+
+
+    if 'inputCode' not in body_json:
         return construct_response(codes.bad_request, 'Missing input code field')
     elif 'inputCode' in body_json and len(body_json['inputCode']) > max_code_length:
         return construct_response(codes.bad_request, 'Input code too long')
@@ -58,7 +62,7 @@ def lambda_handler(event, context):
         try:
             logger.debug('Calling complexity analyzer...')
             call_complexity_analyzer(
-                body_json['inputCode'], body_json['args'], body_json['maxInputSize'], body_json['uuid'])
+                body_json['inputCode'], body_json['args'], body_json['maxInputSize'], uuid)
             return construct_response(codes.ok, 'Input code passed security check')
         except Exception as e:
             return construct_response(codes.bad_request, 'Failed to call complexity analyzer', str(e))
