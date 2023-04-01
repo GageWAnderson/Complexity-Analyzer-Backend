@@ -140,7 +140,7 @@ def run_and_time_code_execution(compiled_function, args):
     return float("{:.8f}".format(end_time - start_time))
 
 def get_threshold_coefficient(polynomial_term): # Term = 1 for n, 2 for n^2, etc.
-    return 0.01
+    return 0.0000001
 
 
 def get_complexity_from_runtime_graph(runtime_graph):
@@ -186,8 +186,10 @@ def get_polynomial_complexity(coefficients):
     try:
         complexity = len(coefficients) - 1
         for i,coefficient in enumerate(coefficients):
+            if i < 1:
+                break
             logger.debug(f"coefficient: {coefficient}")
-            if coefficient < get_threshold_coefficient(len(coefficients) - i - 1):
+            if abs(coefficient) < get_threshold_coefficient(len(coefficients) - i - 1):
                 complexity -= 1
         logger.debug(f"Polynomial complexity: {complexity}")
         return complexity
