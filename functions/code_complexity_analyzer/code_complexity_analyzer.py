@@ -22,7 +22,7 @@ default_max_input_size = 1000
 
 number_of_steps = 100
 
-max_polynomial_degree = 3
+max_polynomial_degree = 5
 
 default_int_value = 10
 default_string_value = "Hello World"
@@ -139,6 +139,9 @@ def run_and_time_code_execution(compiled_function, args):
     end_time = time.time()
     return float("{:.8f}".format(end_time - start_time))
 
+def get_threshold_coefficient(polynomial_term): # Term = 1 for n, 2 for n^2, etc.
+    return 0.01
+
 
 def get_complexity_from_runtime_graph(runtime_graph):
     try:
@@ -148,10 +151,8 @@ def get_complexity_from_runtime_graph(runtime_graph):
         y_axis = points[:, 1]
 
         # Find the Polynomial that fits the data
-        polynomial_best_error, best_coefficients = find_best_polyfit(
-            x_axis, y_axis, max_polynomial_degree
-        )
-        polynomial_complexity = len(best_coefficients) - 1
+        polynomial_best_error, coefficients = find_best_polyfit(x_axis, y_axis)
+        polynomial_complexity = get_polynomial_complexity(coefficients)
 
         log_best_error = log_squared_error(x_axis, y_axis)
 
@@ -171,24 +172,27 @@ def get_complexity_from_runtime_graph(runtime_graph):
         raise e
 
 
-def find_best_polyfit(x, y, n):
+def find_best_polyfit(x, y):
     try:
-        best_coefficients = None
-        best_error = float("inf")
-        # Degree 0 = Constant, Degree 1 = Linear, etc.
-        for degree in range(n + 1):
-            coefficients = np.polyfit(x, y, degree)
-            fit = np.polyval(coefficients, x)
-            error = np.sum((fit - y) ** 2)
-            if error < best_error:
-                best_coefficients = coefficients
-                best_error = error
-        logger.debug(
-            f"Best error: {best_error}, Best coefficients: {best_coefficients}"
-        )
-        return best_error, best_coefficients
+        coefficients = np.polyfit(x, y, max_polynomial_degree)
+        fit = np.polyval(coefficients, x)
+        error = np.sum((fit - y) ** 2)
+        return error, coefficients
     except Exception as e:
         logger.debug(f"Failed to find best polyfit: {traceback.format_exc()}")
+        raise e
+
+def get_polynomial_complexity(coefficients):
+    try:
+        complexity = len(coefficients) - 1
+        for i,coefficient in enumerate(coefficients):
+            logger.debug(f"coefficient: {coefficient}")
+            if coefficient < get_threshold_coefficient(len(coefficients) - i - 1):
+                complexity -= 1
+        logger.debug(f"Polynomial complexity: {complexity}")
+        return complexity
+    except Exception as e:
+        logger.debug(f"Failed to get polynomial complexity: {traceback.format_exc()}")
         raise e
 
 
