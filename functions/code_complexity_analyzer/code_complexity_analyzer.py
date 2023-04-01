@@ -137,7 +137,7 @@ def run_and_time_code_execution(compiled_function, args):
     timer.cancel()
 
     end_time = time.time()
-    return end_time - start_time
+    return "{:.8f}".format(end_time - start_time)
 
 
 def get_complexity_from_runtime_graph(runtime_graph):
