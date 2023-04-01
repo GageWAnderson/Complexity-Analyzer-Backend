@@ -21,9 +21,10 @@ def lambda_handler(event, context):
         complexity = event['complexity']
         user_id = event['user-id']
         complexity_graph = event['complexity-graph']
+        description = event['description']
         logger.debug(
             f'Input code: {inputCode}, args: {args}, complexity: {complexity}, user-id: {user_id}, complexity-graph: {complexity_graph}')
-        post_to_s3(inputCode, args, complexity, complexity_graph, user_id)
+        post_to_s3(inputCode, args, complexity, complexity_graph, description, user_id)
     except Exception as e:
         return {
             'statusCode': codes.internal_server_error,
@@ -31,7 +32,7 @@ def lambda_handler(event, context):
         }
 
 
-def post_to_s3(inputCode, args, complexity, complexity_graph, user_id):
+def post_to_s3(inputCode, args, complexity, complexity_graph, description, user_id):
 
     # Timestamps are unique, so we can use them as keys
     timestamp = str(int(time.time()))
@@ -57,6 +58,7 @@ def post_to_s3(inputCode, args, complexity, complexity_graph, user_id):
             'inputCode': inputCode,
             'args': args,
             'complexity': complexity,
+            'description': description,
             'user-id': user_id
         }))
     except Exception as e:
