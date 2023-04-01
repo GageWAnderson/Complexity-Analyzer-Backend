@@ -46,6 +46,8 @@ def lambda_handler(event, context):
         "inputCode" in request_body and len(request_body["inputCode"]) > max_code_length
     ):
         return construct_response(codes.bad_request, "Input code too long")
+    elif "description" not in request_body:
+        return construct_response(codes.bad_request, "Missing description field")
     elif "args" not in request_body:
         return construct_response(codes.bad_request, "Missing arguments field")
     elif (
@@ -71,6 +73,7 @@ def lambda_handler(event, context):
                 request_body["inputCode"],
                 request_body["args"],
                 request_body["maxInputSize"],
+                request_body["description"],
                 uuid,
             )
             return construct_response(codes.ok, "Input code passed security check")
@@ -102,7 +105,7 @@ def validate_code_security(code, args):
     return json.loads(response)["statusCode"] == codes.ok
 
 
-def call_complexity_analyzer(code, args, maxInputSize, user_id):
+def call_complexity_analyzer(code, args, maxInputSize, description, user_id):
     lambdaClient.invoke(
         FunctionName="code_complexity_analyzer",
         InvocationType="Event",
@@ -111,6 +114,7 @@ def call_complexity_analyzer(code, args, maxInputSize, user_id):
                 "inputCode": code,
                 "args": args,
                 "maxInputSize": maxInputSize,
+                "description": description,
                 "user-id": user_id,
             }
         ),

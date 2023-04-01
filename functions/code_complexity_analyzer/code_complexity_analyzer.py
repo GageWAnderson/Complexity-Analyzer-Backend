@@ -45,6 +45,7 @@ def lambda_handler(event, context):
         args = event["args"]
         maxInputSize = event["maxInputSize"]
         user_id = event["user-id"]
+        description = event["description"]
 
         compiled_function = compile_input_function_restricted(
             input_function_body, parseArgsToCommaDelimitedList(args)
@@ -59,7 +60,9 @@ def lambda_handler(event, context):
 
         complexity = get_complexity_from_runtime_graph(runtime_graph)
 
-        publish_results(input_function_body, args, complexity, runtime_graph, user_id)
+        publish_results(
+            input_function_body, args, complexity, runtime_graph, description, user_id
+        )
 
         return construct_response(codes.ok, "Called Code Complexity Analyzer")
     except Exception as e:
@@ -139,7 +142,8 @@ def run_and_time_code_execution(compiled_function, args):
     end_time = time.time()
     return float("{:.8f}".format(end_time - start_time))
 
-def get_threshold_coefficient(polynomial_term): # Term = 1 for n, 2 for n^2, etc.
+
+def get_threshold_coefficient(polynomial_term):  # Term = 1 for n, 2 for n^2, etc.
     return 0.0000001
 
 
@@ -182,10 +186,11 @@ def find_best_polyfit(x, y):
         logger.debug(f"Failed to find best polyfit: {traceback.format_exc()}")
         raise e
 
+
 def get_polynomial_complexity(coefficients):
     try:
         complexity = len(coefficients) - 1
-        for i,coefficient in enumerate(coefficients):
+        for i, coefficient in enumerate(coefficients):
             if i < 1:
                 break
             logger.debug(f"coefficient: {coefficient}")
@@ -249,7 +254,9 @@ def format_complexity(
         raise Exception("No best fit found")
 
 
-def publish_results(inputCode, args, complexity, complexity_graph, user_id):
+def publish_results(
+    inputCode, args, complexity, complexity_graph, description, user_id
+):
     try:
         logger.debug(
             f"Publishing results to post_complexity_analyzer_results (user_id: {user_id}"
@@ -261,6 +268,7 @@ def publish_results(inputCode, args, complexity, complexity_graph, user_id):
                 {
                     "inputCode": inputCode,
                     "args": args,
+                    "description": description,
                     "complexity": complexity,
                     "complexity-graph": complexity_graph,
                     "user-id": user_id,
