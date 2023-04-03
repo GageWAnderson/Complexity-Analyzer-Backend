@@ -16,9 +16,10 @@ def lambda_handler(event, context):
     try:
         uuid = event["queryStringParameters"]["uuid"]
     except Exception as e:
+        logger.error(f"Error getting UUID from request: {traceback.format_exc()}")
         return construct_response(
             codes.bad_request,
-            error=f"Unable to get UUID from request: {traceback.format_exc()}",
+            error=f"Unable to get UUID from request",
         )
 
     try:
@@ -30,9 +31,10 @@ def lambda_handler(event, context):
         else:
             return construct_response(codes.ok, body=results)
     except Exception as e:
+        logger.error(f"Error querying user results: {traceback.format_exc()}")
         return construct_response(
             codes.bad_request,
-            error=f"Error querying user results: {traceback.format_exc()}",
+            error=f"Error querying user results",
         )
 
 
@@ -43,9 +45,7 @@ def construct_response(status_code, body=None, error=None):
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
         },
-        "body": json.dumps(
-            {"body": body, "error": error}
-        ),  # TODO: Don't return specific errors to FE
+        "body": json.dumps({"body": body, "error": error}),
     }
 
 
@@ -53,15 +53,12 @@ def get_all_metadata(user_id):
     try:
         res = []
         response = s3.list_objects_v2(Bucket=user_results_s3_bucket, Prefix=user_id)
-        logger.debug(f"Bucket: {user_results_s3_bucket}")
         for object in response["Contents"]:
             if object["Key"].endswith("metadata.json"):
-                logger.debug(f"Found metadata file: {object['Key']}")
+                # fmt: off
                 metadata = s3.get_object(Bucket=user_results_s3_bucket, Key=object['Key'])['Body'].read().decode('utf-8')
-                res.append(
-                    {"timestamp": object["Key"].split("/")[1], "metadata": metadata}
-                )
-        logger.debug(f"Metadata file: {res}")
+                # fmt: on
+                res.append({"metadata": metadata})
         return res
     except Exception as e:
         logger.error(f"Error getting graph object: {traceback.format_exc()}")
