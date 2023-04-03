@@ -49,8 +49,10 @@ def get_all_metadata(user_id):
     try:
         res = []
         response = s3.list_objects_v2(Bucket=user_results_s3_bucket, Prefix=user_id)
+        logger.debug(f"Bucket: {user_results_s3_bucket}")
         for object in response["Contents"]:
             if object["Key"].endswith("metadata.json"):
+                logger.debug(f"Found metadata file: {object['Key']}")
                 metadata = (
                     s3.get_object(Bucket=user_results_s3_bucket, Key=object["Key"])
                     .get()["Body"]
