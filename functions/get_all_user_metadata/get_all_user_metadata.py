@@ -20,7 +20,7 @@ def lambda_handler(event, context):
         )
 
     try:
-        results = get_all_user_metadata(uuid)
+        results = get_all_metadata(uuid)
         if not results:
             return construct_response(
                 codes.not_found, f"No results found for user {uuid}"
@@ -32,7 +32,7 @@ def lambda_handler(event, context):
             codes.bad_request, error=f"Error querying user results: {str(e)}"
         )
 
-# TODO: Extract to a lambda layer
+
 def construct_response(status_code, body=None, error=None):
     return {
         "statusCode": status_code,
@@ -44,15 +44,22 @@ def construct_response(status_code, body=None, error=None):
     }
 
 
-def get_all_user_metadata(user_id):
-    result = []
-    bucket = s3.Bucket(user_results_s3_bucket)
-    logger.debug(f"Getting user metadata objects from bucket {user_results_s3_bucket}")
-    for obj in bucket.objects.filter(Prefix=user_id):
-        logger.debug(f"Object key: {obj.key}")
-        if obj.key.endswith("metadata.json"):
-            logger.debug(f"Getting metadata object: {obj.key}")
-            metadata_object = s3.Object(user_results_s3_bucket, obj.key)
-            metadata = json.loads(metadata_object.get()["Body"].read())
-            result.append(metadata)
-    return result
+def get_all_metadata(user_id):
+
+    try:
+        res = []
+        response = s3.list_objects_v2(Bucket=user_results_s3_bucket, Prefix=user_id)
+        for object in response["Contents"]:
+            if object["Key"].endswith("metadata.json"):
+                metadata = (
+                    s3.Object(user_results_s3_bucket, object["Key"])
+                    .get()["Body"]
+                    .read()
+                    .decode("utf-8")
+                )
+                res.append({"timestamp": object["Key"].split("/")[1], "metadata": metadata})
+        logger.debug(f"Metadata file: {res}")
+        return res
+    except Exception as e:
+        logger.error(f"Error getting graph object: {str(e)}")
+        raise e
