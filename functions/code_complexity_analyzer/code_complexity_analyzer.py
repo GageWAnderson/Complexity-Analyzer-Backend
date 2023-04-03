@@ -128,6 +128,7 @@ def run_and_time_code_execution(compiled_function, args):
     timer.start()
 
     try:
+        logger.debug(f"Running code with args: {args}")
         start_time = time.time()
         compiled_function(*args)
     except TimeoutError as e1:
@@ -140,6 +141,7 @@ def run_and_time_code_execution(compiled_function, args):
     timer.cancel()
 
     end_time = time.time()
+    logger.debug(f"Code execution completed in {end_time - start_time} seconds")
     return float("{:.8f}".format(end_time - start_time))
 
 
@@ -189,6 +191,7 @@ def find_best_polyfit(x, y):
 
 def get_polynomial_complexity(coefficients):
     try:
+        logger.debug(f"Getting polynomial complexity: {coefficients}")
         complexity = len(coefficients) - 1
         for i, coefficient in enumerate(coefficients):
             if i < 1:
