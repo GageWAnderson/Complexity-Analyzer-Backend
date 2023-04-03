@@ -57,12 +57,7 @@ def get_all_metadata(user_id):
         for object in response["Contents"]:
             if object["Key"].endswith("metadata.json"):
                 logger.debug(f"Found metadata file: {object['Key']}")
-                metadata = (
-                    s3.get_object(user_results_s3_bucket, object["Key"])
-                    .get()["Body"]
-                    .read()
-                    .decode("utf-8")
-                )
+                metadata = s3.get_object(Bucket=user_results_s3_bucket, Key=object['Key'])['Body'].read().decode('utf-8')
                 res.append(
                     {"timestamp": object["Key"].split("/")[1], "metadata": metadata}
                 )
