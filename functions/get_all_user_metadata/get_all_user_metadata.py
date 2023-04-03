@@ -15,6 +15,7 @@ logger.setLevel(logging.DEBUG)
 def lambda_handler(event, context):
     try:
         uuid = event["queryStringParameters"]["uuid"]
+        logger.debug(f"Getting all metadata for uuid: {uuid}")
     except Exception as e:
         logger.error(f"Error getting UUID from request: {traceback.format_exc()}")
         return construct_response(
