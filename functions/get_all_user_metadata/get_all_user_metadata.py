@@ -58,7 +58,7 @@ def get_all_metadata(user_id):
             if object["Key"].endswith("metadata.json"):
                 logger.debug(f"Found metadata file: {object['Key']}")
                 metadata = (
-                    s3.get_object(Bucket=user_results_s3_bucket, Key=object["Key"])
+                    s3.get_object(user_results_s3_bucket, object["Key"])
                     .get()["Body"]
                     .read()
                     .decode("utf-8")
