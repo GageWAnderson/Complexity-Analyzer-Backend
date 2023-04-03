@@ -3,7 +3,7 @@ import boto3
 import logging
 from requests import codes
 
-s3 = boto3.resource("s3")
+s3 = boto3.client("s3")
 
 user_results_s3_bucket = "complexity-analyzer-results-test"
 
@@ -52,7 +52,7 @@ def get_all_metadata(user_id):
         for object in response["Contents"]:
             if object["Key"].endswith("metadata.json"):
                 metadata = (
-                    s3.Object(user_results_s3_bucket, object["Key"])
+                    s3.get_object(Bucket=user_results_s3_bucket, Key=object["Key"])
                     .get()["Body"]
                     .read()
                     .decode("utf-8")
