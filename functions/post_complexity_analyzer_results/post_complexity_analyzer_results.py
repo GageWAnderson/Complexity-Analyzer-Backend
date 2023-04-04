@@ -28,8 +28,9 @@ def lambda_handler(event, context):
         logger.debug(
             f"Input code: {inputCode}, args: {args}, complexity: {complexity}, user-id: {user_id}, complexity-graph: {complexity_graph}"
         )
-        post_metadata_to_dynamo_db(inputCode, args, complexity, user_id, description)
-        post_complexity_graph_to_s3(user_id, complexity_graph)
+        timestamp = str(int(time.time()))
+        post_metadata_to_dynamo_db(inputCode, args, complexity, user_id, description, timestamp)
+        post_complexity_graph_to_s3(user_id, complexity_graph, timestamp)
     except Exception as e:
         return {
             "statusCode": codes.internal_server_error,
@@ -37,9 +38,8 @@ def lambda_handler(event, context):
         }
 
 
-def post_metadata_to_dynamo_db(inputCode, args, complexity, user_id, description):
+def post_metadata_to_dynamo_db(inputCode, args, complexity, user_id, description, timestamp):
     try:
-        timestamp = str(int(time.time()))
         table = dynamodb.Table(table_name)
         table.put_item(
             Item={
@@ -56,9 +56,7 @@ def post_metadata_to_dynamo_db(inputCode, args, complexity, user_id, description
         raise e
 
 
-def post_complexity_graph_to_s3(user_id, complexity_graph):
-    # Timestamps are unique, so we can use them as keys
-    timestamp = str(int(time.time()))
+def post_complexity_graph_to_s3(user_id, complexity_graph, timestamp):
     prefix = f"{user_id}/{timestamp}"
     logger.debug(f"Prefix: {prefix}")
 

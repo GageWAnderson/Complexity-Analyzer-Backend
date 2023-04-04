@@ -197,9 +197,9 @@ def get_polynomial_complexity(coefficients):
         logger.debug(f"Getting polynomial complexity: {coefficients}")
         complexity = len(coefficients) - 1
         for i, coefficient in enumerate(coefficients):
-            logger.debug(f"i: {i}, coefficient: {coefficient}")
-            if i == len(coefficients) - 1:
+            if i == len(coefficients) - 1:  
                 break
+            logger.debug(f"i: {i}, coefficient: {coefficient}") 
             if abs(coefficient) < get_threshold_coefficient(len(coefficients) - i - 1):
                 complexity -= 1
         logger.debug(f"Polynomial complexity: {complexity}")
