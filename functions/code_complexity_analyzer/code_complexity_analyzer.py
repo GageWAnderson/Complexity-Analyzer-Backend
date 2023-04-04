@@ -5,7 +5,7 @@ from requests import codes
 import json
 import boto3
 import logging
-from RestrictedPython import safe_builtins, compile_restricted_function
+from RestrictedPython import safe_builtins, utility_builtins, compile_restricted_function
 import ast
 import numpy as np
 import random
@@ -17,7 +17,15 @@ dynamodb = boto3.resource("dynamodb")
 table_name = "complexity-analyzer-metadata-db"
 
 safe_locals = {}
-safe_globals = {"ast": ast, "__builtins__": safe_builtins, "_getiter_": iter}
+safe_globals = {
+    "ast": ast,
+    "__builtins__": safe_builtins,
+    '_utility_builtins_': utility_builtins,
+    "_getiter_": iter,
+    "_getattr_": getattr,
+    "_getitem_": lambda obj, index: obj[index],
+    "_print_": print,
+}
 
 # TODO: Think Harder about what this should be
 max_int_size = 10000
