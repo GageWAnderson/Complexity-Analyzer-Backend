@@ -30,7 +30,8 @@ def lambda_handler(event, context):
             return construct_response(codes.ok, body=results)
     except Exception as e:
         return construct_response(
-            codes.bad_request, error=f"Error querying user results: {traceback.format_exc()}"
+            codes.bad_request,
+            error=f"Error querying user results: {traceback.format_exc()}",
         )
 
 
@@ -48,9 +49,9 @@ def construct_response(status_code, body=None, error=None):
 def get_metadata_by_timestamp(user_id, timestamp):
     try:
         table = dynamodb.Table(table_name)
-        metadata = table.get_item(
-            Key={"partition_key": user_id, "sort_key": timestamp}
-        )["Item"]
+        # fmt: off
+        metadata = table.get_item(Key={"partition_key": user_id, "sort_key": timestamp})["Item"]
+        # fmt: on
         logger.debug(f"Metadata file: {metadata}")
         return metadata
     except Exception as e:
