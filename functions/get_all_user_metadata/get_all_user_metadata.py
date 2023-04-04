@@ -4,9 +4,8 @@ import logging
 from requests import codes
 import traceback
 
-s3 = boto3.client("s3")
-
-user_results_s3_bucket = "complexity-analyzer-results-test"
+dynamodb = boto3.resource("dynamodb")
+table_name = "complexity-analyzer-metadata-db"
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -52,15 +51,12 @@ def construct_response(status_code, body=None, error=None):
 
 def get_all_metadata(user_id):
     try:
-        res = []
-        response = s3.list_objects_v2(Bucket=user_results_s3_bucket, Prefix=user_id)
-        for object in response["Contents"]:
-            if object["Key"].endswith("metadata.json"):
-                # fmt: off
-                metadata = s3.get_object(Bucket=user_results_s3_bucket, Key=object['Key'])['Body'].read().decode('utf-8')
-                # fmt: on
-                res.append({"metadata": metadata})
-        return res
+        table = dynamodb.Table(table_name)
+        # fmt: off
+        metadata = table.query(KeyConditionExpression=Key('uuid').eq(user_id))['Items']
+        # fmt: on
+        logger.debug(f"Metadata file: {metadata}")
+        return metadata
     except Exception as e:
         logger.error(f"Error getting graph object: {traceback.format_exc()}")
         raise e

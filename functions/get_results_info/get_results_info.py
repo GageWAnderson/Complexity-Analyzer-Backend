@@ -17,8 +17,7 @@ def lambda_handler(event, context):
         timestamp = event["queryStringParameters"]["timestamp"]
     except Exception as e:
         return construct_response(
-            codes.bad_request, "Unable to get UUID from request", str(e)
-        )
+            codes.bad_request, error="Unable to get UUID from request")
 
     try:
         results = get_metadata_by_timestamp(uuid, timestamp)
@@ -31,7 +30,7 @@ def lambda_handler(event, context):
     except Exception as e:
         return construct_response(
             codes.bad_request,
-            error=f"Error querying user results: {traceback.format_exc()}",
+            error=f"Error querying user results",
         )
 
 
