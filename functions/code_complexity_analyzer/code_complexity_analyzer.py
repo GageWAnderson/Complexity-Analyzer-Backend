@@ -125,9 +125,7 @@ def run_code_with_variable_input(
         args_for_this_run = getArgsForThisRun(args, variable_arg_value)
         try:
             runtime = run_and_time_code_execution(compiled_function, args_for_this_run)
-            runtime_graph.append(
-                (getArgSizeScalar(variable_arg_type, arg_range, step_size, i), runtime)
-            )
+            runtime_graph.append((getArgSizeScalar(arg_range, step_size, i), runtime))
         except Exception as e:
             # Some inputs may fail, don't stop the whole execution since others may succeed
             logger.debug(
