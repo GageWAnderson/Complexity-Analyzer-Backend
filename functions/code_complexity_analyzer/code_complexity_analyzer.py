@@ -5,7 +5,11 @@ from requests import codes
 import json
 import boto3
 import logging
-from RestrictedPython import safe_builtins, utility_builtins, compile_restricted_function
+from RestrictedPython import (
+    safe_builtins,
+    utility_builtins,
+    compile_restricted_function,
+)
 import ast
 import numpy as np
 import random
@@ -20,7 +24,7 @@ safe_locals = {}
 safe_globals = {
     "ast": ast,
     "__builtins__": safe_builtins,
-    '_utility_builtins_': utility_builtins,
+    "_utility_builtins_": utility_builtins,
     "_getiter_": iter,
     "_getattr_": getattr,
     "_getitem_": lambda obj, index: obj[index],
@@ -121,7 +125,9 @@ def run_code_with_variable_input(
         args_for_this_run = getArgsForThisRun(args, variable_arg_value)
         try:
             runtime = run_and_time_code_execution(compiled_function, args_for_this_run)
-            runtime_graph.append((variable_arg_value, runtime))
+            runtime_graph.append(
+                (getArgSizeScalar(variable_arg_type, arg_range, step_size, i), runtime)
+            )
         except Exception as e:
             # Some inputs may fail, don't stop the whole execution since others may succeed
             logger.debug(
@@ -358,6 +364,14 @@ def getArgValue(arg_type, arg_range, step_size, step_number):
             return res
     except Exception as e:
         logger.debug(f"Failed to get arg value: {traceback.format_exc()}")
+        raise e
+
+
+def getArgSizeScalar(arg_range, step_size, step_number):
+    try:
+        return arg_range[0] + (step_size * step_number)
+    except Exception as e:
+        logger.debug(f"Failed to get arg size scalar: {traceback.format_exc()}")
         raise e
 
 
