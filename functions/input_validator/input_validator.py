@@ -2,6 +2,7 @@ import json
 from requests import codes
 import boto3
 import logging
+import traceback
 
 max_code_length = 500
 
@@ -66,11 +67,17 @@ def lambda_handler(event, context):
             return response
 
     logger.debug("Validating input code...")
-    if validate_code_security(request_body["inputCode"], request_body["args"]):
+    try:
+        parsed_code = json.loads(request_body["inputCode"])
+    except Exception as e:
+        logger.debug(f"Failed to parse input code: {traceback.format_exc()}")
+        return construct_response(codes.bad_request, error="Failed to parse Input code JSON string.")
+    logger.debug(f"Parsed code: {parsed_code}")
+    if validate_code_security(parsed_code, request_body["args"]):
         try:
             logger.debug("Calling complexity analyzer...")
             call_complexity_analyzer(
-                request_body["inputCode"],
+                parsed_code,
                 request_body["args"],
                 request_body["maxInputSize"],
                 request_body["description"],
