@@ -50,7 +50,7 @@ def get_metadata_by_timestamp(user_id, timestamp):
     try:
         table = dynamodb.Table(table_name)
         # fmt: off
-        metadata = table.get_item(Key={"partition_key": user_id, "sort_key": timestamp})["Item"]
+        metadata = table.get_item(Key={"uuid": user_id, "timestamp": timestamp})["Item"]
         # fmt: on
         logger.debug(f"Metadata file: {metadata}")
         return metadata
