@@ -200,6 +200,7 @@ def find_best_polyfit(x, y):
         coefficients = np.polyfit(x, y, max_polynomial_degree)
         fit = np.polyval(coefficients, x)
         error = np.sum((fit - y) ** 2)
+        logger.debug(f"Polynomial Squared Error: {error}")
         return error, coefficients
     except Exception as e:
         logger.debug(f"Failed to find best polyfit: {traceback.format_exc()}")
