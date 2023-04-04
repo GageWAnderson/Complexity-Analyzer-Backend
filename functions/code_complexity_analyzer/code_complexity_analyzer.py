@@ -13,6 +13,9 @@ import traceback
 
 lambdaClient = boto3.client("lambda")
 
+dynamodb = boto3.resource("dynamodb")
+table_name = "complexity-analyzer-metadata-db"
+
 safe_locals = {}
 safe_globals = {"ast": ast, "__builtins__": safe_builtins, "_getiter_": iter}
 
