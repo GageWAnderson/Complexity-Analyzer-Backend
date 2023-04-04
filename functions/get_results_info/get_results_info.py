@@ -2,10 +2,10 @@ import json
 import boto3
 import logging
 from requests import codes
+import traceback
 
-s3 = boto3.resource("s3")
-
-user_results_s3_bucket = "complexity-analyzer-results-test"
+dynamodb = boto3.resource("dynamodb")
+table_name = "complexity-analyzer-metadata-db"
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -30,7 +30,7 @@ def lambda_handler(event, context):
             return construct_response(codes.ok, body=results)
     except Exception as e:
         return construct_response(
-            codes.bad_request, error=f"Error querying user results: {str(e)}"
+            codes.bad_request, error=f"Error querying user results: {traceback.format_exc()}"
         )
 
 
@@ -46,17 +46,13 @@ def construct_response(status_code, body=None, error=None):
 
 
 def get_metadata_by_timestamp(user_id, timestamp):
-    metadata_object = f"{user_id}/{timestamp}/metadata.json"
-
     try:
-        metadata = (
-            s3.Object(user_results_s3_bucket, metadata_object)
-            .get()["Body"]
-            .read()
-            .decode("utf-8")
-        )
+        table = dynamodb.Table(table_name)
+        metadata = table.get_item(
+            Key={"partition_key": user_id, "sort_key": timestamp}
+        )["Item"]
         logger.debug(f"Metadata file: {metadata}")
         return metadata
     except Exception as e:
-        logger.error(f"Error getting graph object: {str(e)}")
+        logger.error(f"Error getting graph object: {traceback.format_exc()}")
         raise e
