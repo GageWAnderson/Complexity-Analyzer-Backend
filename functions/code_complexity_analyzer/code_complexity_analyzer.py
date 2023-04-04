@@ -133,18 +133,20 @@ def run_and_time_code_execution(compiled_function, args):
     try:
         logger.debug(f"Running code with args: {args}")
         start_time = time.time()
-        compiled_function(*args)
+        result = compiled_function(*args)
     except TimeoutError as e1:
         logger.debug("Code execution timed out")
         raise e1
     except Exception as e2:
-        logger.debug(f"Code execution failed: {str(e2)}")
+        logger.debug(f"Code execution failed: {traceback.format_exc()}")
         raise e2
 
     timer.cancel()
 
     end_time = time.time()
-    logger.debug(f"Code execution completed in {end_time - start_time} seconds")
+    logger.debug(
+        f"Code execution completed in {end_time - start_time} seconds with result: {result}"
+    )
     return float("{:.8f}".format(end_time - start_time))
 
 
@@ -197,9 +199,9 @@ def get_polynomial_complexity(coefficients):
         logger.debug(f"Getting polynomial complexity: {coefficients}")
         complexity = len(coefficients) - 1
         for i, coefficient in enumerate(coefficients):
-            if i == len(coefficients) - 1:  
+            if i == len(coefficients) - 1:
                 break
-            logger.debug(f"i: {i}, coefficient: {coefficient}") 
+            logger.debug(f"i: {i}, coefficient: {coefficient}")
             if abs(coefficient) < get_threshold_coefficient(len(coefficients) - i - 1):
                 complexity -= 1
         logger.debug(f"Polynomial complexity: {complexity}")
