@@ -91,9 +91,9 @@ def getDefaultArgs(args):
             result.append(default_int_arg_value)
         elif arg['argType'] == 'string':
             result.append(default_string_arg_value)
-        elif arg['argType'] == 'int_list':
+        elif arg['argType'] == 'list<int>':
             result.append(default_int_list_arg_value)
-        elif arg['argType'] == 'string_list':
+        elif arg['argType'] == 'list<string>':
             result.append(default_string_list_arg_value)
     return result
 

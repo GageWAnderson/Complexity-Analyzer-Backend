@@ -179,7 +179,9 @@ def isValidMaxInputSize(maxInputSize):
         and maxInputSize <= MAX_INPUT_SIZE_LIMIT
     )
 
-
+# TODO: This should be moved to a common library
+# TODO: Add informative errors to give to the frontend user
+    # Error section can be used as text to display in an error alert on the frontend
 def construct_response(status_code, body=None, error=None):
     return {
         "statusCode": status_code,
