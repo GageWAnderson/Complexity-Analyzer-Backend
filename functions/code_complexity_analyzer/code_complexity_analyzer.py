@@ -45,7 +45,7 @@ default_list_of_ints_value = [1]
 default_list_of_strings_value = ["a"]
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 
 restricted_function_name = "restricted_function"
 
@@ -66,12 +66,9 @@ def lambda_handler(event, context):
             input_function_body, parseArgsToCommaDelimitedList(args)
         )
 
-        logger.debug(f"Running code with variable input: {args}")
         runtime_graph = run_code_with_variable_input(
             compiled_function, args, maxInputSize
         )
-
-        logger.debug(f"runtime_graph: {runtime_graph}")
 
         complexity = get_complexity_from_runtime_graph(runtime_graph)
 
@@ -88,13 +85,9 @@ def lambda_handler(event, context):
 
 def compile_input_function_restricted(input_function_body, args):
     try:
-        logger.debug("Compiling input code in restricted envionment")
         compiled_function = compile_restricted_function(
             args, input_function_body, restricted_function_name
         )
-
-        # TODO: Handle compilation errors inside the compiled_function object
-        logger.debug(str(compiled_function))
 
         if str(compiled_function.errors) != "()":
             return construct_response(
@@ -105,7 +98,7 @@ def compile_input_function_restricted(input_function_body, args):
         exec(compiled_function.code, safe_globals, safe_locals)
         return safe_locals[restricted_function_name]
     except Exception as e:
-        logger.debug(
+        logger.error(
             "Failed to compile input code in restricted envionment, warning this code might be malicious."
         )
         raise e
@@ -119,7 +112,6 @@ def run_code_with_variable_input(
     arg_range = [0, maxInputSize]
     step_size = getStepSize(arg_range)
 
-    logger.debug(f"arg_range: {arg_range}, step_size: {step_size}")
     for i in range(number_of_steps):
         variable_arg_value = getArgValue(variable_arg_type, arg_range, step_size, i)
         args_for_this_run = getArgsForThisRun(args, variable_arg_value)
@@ -127,9 +119,8 @@ def run_code_with_variable_input(
             runtime = run_and_time_code_execution(compiled_function, args_for_this_run)
             runtime_graph.append((getArgSizeScalar(arg_range, step_size, i), runtime))
         except Exception as e:
-            # Some inputs may fail, don't stop the whole execution since others may succeed
-            logger.debug(
-                f"Failed to run code with variable input: Args: {args_for_this_run}, Exception: {str(e)}"
+            logger.error(
+                f"Failed to run code with variable input: Exception: {traceback.format_exc()}"
             )
 
     return runtime_graph
@@ -143,22 +134,18 @@ def run_and_time_code_execution(compiled_function, args):
     timer.start()
 
     try:
-        logger.debug(f"Running code with args: {args}")
         start_time = time.time()
         result = compiled_function(*args)
     except TimeoutError as e1:
-        logger.debug("Code execution timed out")
+        logger.error("Code execution timed out")
         raise e1
     except Exception as e2:
-        logger.debug(f"Code execution failed: {traceback.format_exc()}")
+        logger.error(f"Code execution failed: {traceback.format_exc()}")
         raise e2
 
     timer.cancel()
 
     end_time = time.time()
-    logger.debug(
-        f"Code execution completed in {end_time - start_time} seconds with result: {result}"
-    )
     return float("{:.8f}".format(end_time - start_time))
 
 
@@ -168,7 +155,6 @@ def get_threshold_coefficient(polynomial_term):  # Term = 1 for n, 2 for n^2, et
 
 def get_complexity_from_runtime_graph(runtime_graph):
     try:
-        logger.debug(f"Calculating complexity from runtime graph: {runtime_graph}")
         points = np.array(runtime_graph)
         x_axis = points[:, 0]
         y_axis = points[:, 1]
@@ -189,7 +175,7 @@ def get_complexity_from_runtime_graph(runtime_graph):
             nlogn_best_error,
         )
     except Exception as e:
-        logger.debug(
+        logger.error(
             f"Failed to calculate complexity from runtime graph: {traceback.format_exc()}"
         )
         raise e
@@ -200,27 +186,23 @@ def find_best_polyfit(x, y):
         coefficients = np.polyfit(x, y, max_polynomial_degree)
         fit = np.polyval(coefficients, x)
         error = np.sum((fit - y) ** 2)
-        logger.debug(f"Polynomial Squared Error: {error}")
         return error, coefficients
     except Exception as e:
-        logger.debug(f"Failed to find best polyfit: {traceback.format_exc()}")
+        logger.error(f"Failed to find best polyfit: {traceback.format_exc()}")
         raise e
 
 
 def get_polynomial_complexity(coefficients):
     try:
-        logger.debug(f"Getting polynomial complexity: {coefficients}")
         complexity = len(coefficients) - 1
         for i, coefficient in enumerate(coefficients):
             if i == len(coefficients) - 1:
                 break
-            logger.debug(f"i: {i}, coefficient: {coefficient}")
             if abs(coefficient) < get_threshold_coefficient(len(coefficients) - i - 1):
                 complexity -= 1
-        logger.debug(f"Polynomial complexity: {complexity}")
         return complexity
     except Exception as e:
-        logger.debug(f"Failed to get polynomial complexity: {traceback.format_exc()}")
+        logger.error(f"Failed to get polynomial complexity: {traceback.format_exc()}")
         raise e
 
 
@@ -232,10 +214,9 @@ def log_squared_error(x, y):
         m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
         y_fit = m * log_x + c
         error = np.sum((y_axis_no_zeros - y_fit) ** 2)
-        logger.debug(f"Log squared error: {error}")
         return error
     except Exception as e:
-        logger.debug(f"Failed to calculate log squared error: {traceback.format_exc()}")
+        logger.error(f"Failed to calculate log squared error: {traceback.format_exc()}")
         raise e
 
 
@@ -247,10 +228,9 @@ def nlogn_squared_error(x, y):
         m, c = np.linalg.lstsq(A, y_axis_no_zeros, rcond=None)[0]
         y_fit = m * nlogn + c
         error = np.sum((y_axis_no_zeros - y_fit) ** 2)
-        logger.debug(f"NlogN squared error: {error}")
         return error
     except Exception as e:
-        logger.debug(
+        logger.error(
             f"Failed to calculate nlogn squared error: {traceback.format_exc()}"
         )
         raise e
@@ -279,9 +259,6 @@ def publish_results(
     inputCode, args, complexity, complexity_graph, description, user_id
 ):
     try:
-        logger.debug(
-            f"Publishing results to post_complexity_analyzer_results (user_id: {user_id}"
-        )
         lambdaClient.invoke(
             FunctionName="post_complexity_analyzer_results",
             InvocationType="Event",
@@ -297,16 +274,14 @@ def publish_results(
             ),
         )
     except Exception as e:
-        logger.debug(f"Failed to publish results: {traceback.format_exc()}")
+        logger.error(f"Failed to publish results: {traceback.format_exc()}")
         raise e
 
 
 def parseArgsToCommaDelimitedList(args):
-    logger.debug(f"Parsing args to comma delimited list: {args}")
     result = []
     for arg in args:
         result.append(arg["argName"])
-    logger.debug(f'Parsed args to comma delimited list: {",".join(result)}')
     return ",".join(result)
 
 
@@ -362,7 +337,7 @@ def getArgValue(arg_type, arg_range, step_size, step_number):
                 res.append(random.choice(string.ascii_lowercase))
             return res
     except Exception as e:
-        logger.debug(f"Failed to get arg value: {traceback.format_exc()}")
+        logger.error(f"Failed to get arg value: {traceback.format_exc()}")
         raise e
 
 
@@ -370,7 +345,7 @@ def getArgSizeScalar(arg_range, step_size, step_number):
     try:
         return arg_range[0] + (step_size * step_number)
     except Exception as e:
-        logger.debug(f"Failed to get arg size scalar: {traceback.format_exc()}")
+        logger.error(f"Failed to get arg size scalar: {traceback.format_exc()}")
         raise e
 
 
