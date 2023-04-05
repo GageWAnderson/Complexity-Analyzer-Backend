@@ -10,7 +10,7 @@ dynamodb_client = boto3.resource("dynamodb")
 api_keys_table_name = "complexity-analyzer-api-keys"
 
 api_gateway_stage = "Prod"
-api_gateway_id = "YOUR_API_GATEWAY_ID"
+api_gateway_id = "xa51s0jinb"
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
