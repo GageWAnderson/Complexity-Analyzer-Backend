@@ -44,12 +44,7 @@ def get_api_key(uuid):
 
 
 def create_api_key(uuid):
-    api_key = api_gateway_client.create_api_key(
-        name=uuid,
-        enabled=True,
-        generateDistinctId=True,
-        stageKeys=[{"restApiId": api_gateway_id, "stageName": api_gateway_stage}],
-    )
+    api_key = api_gateway_client.create_api_key()
     logger.debug(f"API Key ID: {api_key['id']}")
     # fmt: off
     dynamodb_client.Table(api_keys_table_name).put_item(Item={"uuid": uuid, "apiKey": api_key["id"]})
