@@ -1,26 +1,22 @@
 # Python Lambda Function Repository for AWS
 
-This repository contains Python code for AWS Lambda functions. 
+This repository contains Python code for AWS Lambda functions that implement the backend logic for a code complexity analyzer.
 
 ## Getting Started
 
 1. Clone this repository to your local machine.
 
-2. Set up your AWS credentials on your local machine. You can use the AWS Command Line Interface (CLI) or set them as environment variables.
+2. Develop you code locally on a feature branch. Make a pull request once done.
 
-3. Create a new Lambda function in the AWS Management Console or using the AWS CLI.
-
-4. Deploy your function code to the Lambda function. You can use the AWS Management Console or the AWS CLI to upload your code.
+3. On merge of Pull Requests into `main` AWS CodePipeline will pull from the GitHub repository and deploy the new code to the Lambda functions.
 
 ## Function Structure
 
 Each function in this repository is contained in its own directory with the following structure:
 
-- `__init__.py` is an empty file that indicates that the directory is a Python package.
+- `xxx.py` contains the code for the Lambda function. 
 
-- `main.py` contains the code for the Lambda function. 
-
-- `requirements.txt` lists the dependencies required for the function. 
+- `requirements.txt` lists the dependencies required for the function. This is deprecated, since the functions use Lambda layers to access their dependencies once deployed to the cloud.
 
 ## Testing
 
@@ -37,6 +33,8 @@ lambda-ric main.handler < test_event.json
 `test_event.json` should contain the event data that triggers your Lambda function.
 
 ## Deployment
+
+The reccomended deployment method is to merge the changes to your code into `main` via a PR. This will kick off an AWS CodePipeline build script that wil automatically deploy all the code to your lambda functions.
 
 To deploy your function code to AWS Lambda, you can use the AWS Management Console or the AWS CLI. You will need to package your code into a ZIP file and upload it to the Lambda function.
 
