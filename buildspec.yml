@@ -23,7 +23,7 @@ phases:
       - zip ../code_complexity_analyzer_deployment_package.zip code_complexity_analyzer/code_complexity_analyzer.py
       - zip ../post_complexity_analyzer_results_deployment_package.zip post_complexity_analyzer_results/post_complexity_analyzer_results.py
       - zip ../get_result_graph_deployment_package.zip get_result_graph/get_result_graph.py
-      - zip ../get_all_user_metadata_deployment_package.zip get_all_user_metadata/get_all_user_metadata.py\
+      - zip ../get_all_user_metadata_deployment_package.zip get_all_user_metadata/get_all_user_metadata.py
       - zip ../request_complexity_analyzer_api_key_deployment_package.zip request_complexity_analyzer_api_key/request_complexity_analyzer_api_key.py
       - cd ..
       - echo "Done"
