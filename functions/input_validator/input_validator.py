@@ -17,7 +17,6 @@ number_of_arg_fields = 3
 MAX_INPUT_SIZE_LIMIT = 1000000
 
 lambdaClient = boto3.client("lambda")
-client = boto3.client("cognito-idp")
 
 # TODO: Make an enumeration of allowed arg type strings in a Lambda Layer
 # TODO: Inform the API caller about the allowed arg types and their formatting
