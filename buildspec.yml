@@ -6,6 +6,16 @@ phases:
     commands:
       - echo "Installing dependencies"
       - pip install --upgrade pip
+      - pip install virtualenv
+      - virtualenv venv
+      - source venv/bin/activate
+      - pip install -r functions/input_validator/requirements.txt
+      - pip install -r functions/get_results_info/requirements.txt
+      - pip install -r functions/code_security_validator/requirements.txt
+      - pip install -r functions/code_complexity_analyzer/requirements.txt
+      - pip install -r functions/post_complexity_analyzer_results/requirements.txt
+      - pip install -r functions/get_result_graph/requirements.txt
+      - pip install -r functions/get_all_user_metadata/requirements.txt
   pre_build:
     commands:
       - echo "Running Tests"
