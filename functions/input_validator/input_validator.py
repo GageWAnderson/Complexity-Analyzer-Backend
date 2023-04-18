@@ -3,6 +3,10 @@ from requests import codes
 import boto3
 import logging
 import traceback
+from aws_xray_sdk.core import xray_recorder, patch_all
+
+# Enable X-Ray tracing for this Lambda function
+patch_all()
 
 max_code_length = 500
 
@@ -28,6 +32,10 @@ logger.setLevel(logging.DEBUG)
 
 
 def lambda_handler(event, context):
+
+    xray_recorder.current_segment().put_annotation('InputValidator', context.function_name)
+    xray_recorder.current_segment().put_metadata('Event', event)
+
     try:
         request_body = json.loads(event["body"])
     except Exception as e:
@@ -95,6 +103,7 @@ def lambda_handler(event, context):
 
 
 def validate_code_security(code, args):
+    xray_recorder.begin_subsegment("validate_code_security")
     response = (
         lambdaClient.invoke(
             FunctionName="code_security_validator",
@@ -105,6 +114,7 @@ def validate_code_security(code, args):
         .read()
         .decode("utf-8")
     )
+    xray_recorder.end_subsegment()
 
     logger.debug(f"Code security validation response: {response}")
 
@@ -112,6 +122,7 @@ def validate_code_security(code, args):
 
 
 def call_complexity_analyzer(code, args, maxInputSize, description, user_id):
+    xray_recorder.begin_subsegment("call_complexity_analyzer")
     lambdaClient.invoke(
         FunctionName="code_complexity_analyzer",
         InvocationType="Event",
@@ -125,6 +136,7 @@ def call_complexity_analyzer(code, args, maxInputSize, description, user_id):
             }
         ),
     )
+    xray_recorder.end_subsegment()
 
 
 def validate_all_arguments(json):
